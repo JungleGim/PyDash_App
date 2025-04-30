@@ -1,0 +1,1 @@
+from .py_dash_CANdefines import *       #remdinder to use the relative "." here otherwise it's not "part of the package"
