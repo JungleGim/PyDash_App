@@ -1,6 +1,10 @@
 #!/usr/bin/env python2.7  
 
-# script by Alex Eames https://raspi.tv  
+# some other resources:
+# https://learn.sparkfun.com/tutorials/raspberry-gpio/python-rpigpio-api
+# https://roboticsbackend.com/raspberry-pi-gpio-interrupts-tutorial/
+
+# below script by Alex Eames https://raspi.tv  
 # https://raspi.tv/how-to-use-interrupts-with-python-on-the-raspberry-pi-and-rpi-gpio-part-3  
 
 #imports
