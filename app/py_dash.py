@@ -111,16 +111,16 @@ def upd_strvar(indx):
 
 #-----------------------------init functions
 #can comment out the below before the main window class if static testing
-'''
+
 #----CANBUS init
 os.system("sudo /sbin/ip link set can0 up type can bitrate 500000")     #bring up can0 interface at 500kbps
 time.sleep(0.05)	                                                    #brief pause TODO: does this need to be increased?
-CAN1 = can.interface.Bus(channel='can0', bustype='socketcan')           #instance CAN object
+CAN1 = can.interface.Bus(channel='can0', interface='socketcan')           #instance CAN object
 #can_filter = gen_CAN_filters()                                          #generate list of filters                    
 #CAN1.set_filters(can_filter)                                            #apply list of filters
 CAN1_listener = msg_rx_routine                                          #assign message handler as a listener
 CAN1_notifier = can.Notifier(CAN1, [CAN1_listener])                     #assign listener to notifier
-'''
+
 #-----------------------------class for main window
 ''' @brief: Root window
     @notes: nothing specifically is done here but is the main TK instance
