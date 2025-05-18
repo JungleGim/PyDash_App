@@ -14,9 +14,17 @@ Additional details on the design considerations, required packages, and key feat
 
 # Project Status
 ## Revlog
-- Rev 0: 20240602
+- Rev 0: 06/02/2024
 	- Initial issue
 	- PyDash consists of 5 common engine parameters on a single screen
+ - Rev1a: 05/17/2025
+   	- Added multi-frame (multi-view) capability
+   	- Added GPIO (button) interrupt capability
+   	- Can navigate between views with external buttons
+   	- Added secondary view for CAN sniffer (displays all RX'd CANbus data)
+   	- Added secondary views for settings and errors (partially populated)
+   	- Minor UI tweaks for new views
+   	- Minor file structure tweaks for new views
 	
 ## Future Development
 The below is a list of wants/needs for future revisions; loosely listed in order of importance.
