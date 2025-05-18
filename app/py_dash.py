@@ -1,17 +1,27 @@
 """
-py dash test
+py dash
 ------------
-test script for setting up the basics of a digital dash using a CM4
+App for a digital dash using a CM4 and custom PCB
+
+Rev 1a - 5/17/2025
 
 Notes
 -------------
 Files:
     -readme                 >   required package installs, "todo" items, and future feature requests
-    -py_dash_defines        >   static value defines used throughout (think background and foreground colors)
-    -py_dash_CANdefines     >   CANbus data/labels/vars *****this is what dictates what's handled from CANbus
+    -py_dash_defines        >   high-level defines and variables used throughout
+    -py_dash_CANdefines     >   CANbus data/labels/vars. This is what dictates what's handled from CANbus
+    -py_dash_drawFuncs      >   common functions used to draw widgets
+    -py_dash_SCRNdefines    >   screen specific definitions
 """
+#-----------------------------library imports for main file
+import tkinter as tk                    #tkinter include for UI
+import can                              #import python-can lib
+import os                               #command line operating system include
+import time
+#import datetime as dt
 
-#-----------------------------imports
+#-----------------------------supporting file imports
 from lib import *                       #import files as defined in __init__ file of 'lib' directory
 
 #-----------------------------support functions
@@ -28,6 +38,7 @@ def msg_rx_routine(rx_msg):
     #rx_len = rx_msg.dlc                                 #data length of rx'd packet
     #rx_ext = True if rx_msg.is_extended_id == 'X' else False            #boolean if rx'd ID is an "extended ID"
     upd_CAN_data(rx_addr,rx_data)                       #check rx'd message address against logging channels
+    CAN_rawData.check_new_CANdata(rx_msg)               #check rx'd message against the raw CAN data for the sniffer
 
 ''' @brief: update data check
     @param: addr    - CANbus message address
@@ -100,7 +111,7 @@ def upd_strvar(indx):
 
 #-----------------------------init functions
 #can comment out the below before the main window class if static testing
-
+'''
 #----CANBUS init
 os.system("sudo /sbin/ip link set can0 up type can bitrate 500000")     #bring up can0 interface at 500kbps
 time.sleep(0.05)	                                                    #brief pause TODO: does this need to be increased?
@@ -109,40 +120,115 @@ CAN1 = can.interface.Bus(channel='can0', bustype='socketcan')           #instanc
 #CAN1.set_filters(can_filter)                                            #apply list of filters
 CAN1_listener = msg_rx_routine                                          #assign message handler as a listener
 CAN1_notifier = can.Notifier(CAN1, [CAN1_listener])                     #assign listener to notifier
-
-
+'''
 #-----------------------------class for main window
-class MainWindow(tk.Tk):
-    #-----main window initilization
+''' @brief: Root window
+    @notes: nothing specifically is done here but is the main TK instance
+'''
+class RootWindow(tk.Tk):
     def __init__(self):
-        super().__init__()
-        
-        self.wndw_Default()         #call default window setup
-        self.upd_dsply()            #start updating display after init
+        tk.Tk.__init__(self)
 
-    ''' @brief: default window definition
-        @param: (none)
-        @notes: function contains all the widgets/objects for the default
-                window to be displayed
-        @retrn: (none)
-    '''
-    def wndw_Default(self):
+        #REMINDER: if defining a new frame, it has to be added to this list
+        frame_list = (Wndw_Gauge0, Wndw_Settings, Wndw_CANsniff, Wndw_Errs)
+
+        #----local vars
+        self.container = tk.Frame(self)                     #define the master window as the container to hold the other frames
+        self.container.pack(fill="both", expand=True)       #fill container to window size
+        self.active_frame = tk.Frame()                      #current displayed frame
+        self.prev_frame_indx = None                        #previous displayed frame index     
+        
+        #----set up app
+        self.init_wndw()                                    #initialize window
+        self.init_frames(frame_list)                        #initialize all the child frames used for the dash
+        self.goto_frame(0)                                  #open default frame
+    
+    def init_wndw(self):
         #----window settings/info
-        self.overrideredirect(True)                         #override direct gets rid of the title bar (fullscreen)
+        #self.overrideredirect(True)                         #override direct gets rid of the title bar (fullscreen)
         self.title("Electron Racing Dash")                  #title bar for testing
         disp_res = str(disp_xSz)+'x'+str(disp_ySz)+"+0+0"   #make string for geometry and placement
         self.geometry(disp_res)                             #window size and palcement
         self.maxsize(disp_xSz,disp_ySz)                     #set max size
         self.resizable(False,False)                         #fixed size
 
+    def init_frames(self, frame_list):
+        scrn.init_frames(frame_list, self.container, self)  #instance frames into control dictionary
+        scrn.callback_func = self.frm_switch                #assign the frame switch function as the interrupt callback
+
+    #NOTE: the defined functions here can be handled by the frames with master.[func]
+    ''' @brief: Go To Frame
+        @notes: switches the frame displayed in the root window 
+    '''
+    def goto_frame(self, new_frm_indx):
+        new_frame = scrn.frames[new_frm_indx]       #get the frame based on the passed index
+        self.prev_frame = scrn.get_frm_index(self.active_frame)         #save previous frame - for navigation of "back" button
+        self.active_frame.pack_forget()                    #hide currrent frame
+        self.active_frame = new_frame                      #update to the new frame        
+        self.active_frame.pack(fill="both", expand=True)   #fill new frame to window size
+    
+    ''' @brief: Frame switch
+        @notes: handles the displayed frame state and switches based on inputs
+        @TODO:  Currently am using some nasty hard-coded indecies like "1" for settings
+                and "2" for CAN sniffer. Should really assign these differently so I'm not
+                just tossing hard-coded shite in there.
+    '''
+    def frm_switch(self, btn):
+        indx_crnt_frame = scrn.get_frm_index(self.active_frame)    #get index of the current frame
+        '''
+        handle frame switching baseed on the pressed button. Have to do a bunch of else-if statements
+        here because PyThOn MaTcH sTaTeMeNtS aRe MoRe PoWeRfUl but can't do something fucking
+        simple like value matching. All because PEP-635 says that doing something like that doesn't
+        "add any more value than a bunch of if/else statements". So. Fucking here we are.
+        '''
+        if btn == dash_btn1:
+            if(indx_crnt_frame == 0):                      #if currently at the "first" frame
+                self.goto_frame(len(scrn.frames)-1)             #wrap around to last frame
+            else:
+                self.goto_frame(indx_crnt_frame - 1)            #go to previous frame in list
+        elif btn == dash_btn2:
+            if(indx_crnt_frame == 1):
+                self.goto_frame(self.prev_frame)                #go "back" to the previous frame
+            else:
+                self.goto_frame(1)                              #go to settings frame
+        elif btn == dash_btn3:
+            if(indx_crnt_frame == len(scrn.frames)-1):      #if currently at the "last" frame
+                self.goto_frame(0)                              #wrap around to first frame
+            else:
+                self.goto_frame(indx_crnt_frame + 1)            #go to next frame in list
+        elif btn == dash_btn4: pass #currently no action
+        elif btn == dash_btn5:
+            if(indx_crnt_frame == 2):                       #if in the CAN sniffer view
+                CAN_rawData.clear_CANdata()                     #then clear the CAN data
+        elif btn == dash_btn6: pass #currently no action
+        else:
+            self.goto_frame(0)                              #for other cases, go to default screen
+#end of the root window    
+
+class Wndw_Gauge0(tk.Frame):
+    #-----main window initilization
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        
+        self.frame_eles()           #place frame elements
+        self.upd_dsply()            #start updating display after init
+
+    ''' @brief: frame elements
+        @param: (none)
+        @notes: function contains all the widgets/objects for the default
+                window to be displayed
+        @retrn: (none)
+    '''
+    def frame_eles(self):
         #----init stringvar for data labels
         for i in range(di_sz):                          #loop through array
             di[i].val = tk.StringVar(self, '')          #and assign as a strvar type
             upd_strvar(i)
 
         #----background image
-        self.bgimg = bgimg = tk.PhotoImage(file = working_dir + filepath_bg_img)          #background image
-        canv = self.canvas_bg = canvas_bg = tk.Canvas(self, width=disp_xSz, height=disp_ySz) #use canvas to take advantage of the transparencies in the bgimg
+        self.bgimg = bgimg = tk.PhotoImage(file = working_dir + filepath_bg_img_RPM)            #background image
+        canv = self.canvas_bg = canvas_bg = tk.Canvas(self, width=disp_xSz, height=disp_ySz)    #use canvas to take advantage of the transparencies in the bgimg
         canv.pack(expand=True)
         canv.configure(borderwidth=0,highlightthickness=0)        #remove the border and highlight thickness (kind of the white border)
         canv.configure(bg=bg_color)                               #configure background color of the canvas
@@ -154,19 +240,19 @@ class MainWindow(tk.Tk):
         canv.tag_lower(self.rpm_rect)                                                 #place rectangle
 
         #FAN indicator
-        self.fan_ind = fan_ind = self.draw_circle(canv, 770,500, 38)
-        self.fan_capt = fan_capt = self.draw_txt_lbl(self, txt="FAN", font=default_font_sm); self.fan_capt.place(x=820,y=498, height=noPad_height_sm)
+        self.fan_ind = fan_ind = drw_func.draw_circle(canv, 770,500, 38)
+        self.fan_capt = fan_capt = drw_func.draw_txt_lbl(self, txt="FAN", font=default_font_sm); self.fan_capt.place(x=820,y=498, height=noPad_height_sm)
 
         #headlight indicator
         c = di[indx_lobm]
-        self.lobm_img = lobm_img = self.make_image(working_dir + filepath_light_lo, c.lbl_h)
+        self.lobm_img = lobm_img = drw_func.make_image(working_dir + filepath_light_lo, c.lbl_h)
         di[indx_lobm].lbl_ref = self.lobm_id = lobm_id = canv.create_image(c.lbl_x0, c.lbl_y0, image=lobm_img, anchor="w")
         canv.itemconfigure(lobm_id, state='hidden')
         di[indx_lobm].alt_func = self.updInd_LITE
         di[indx_lobm].scope_ref = canv
 
         c = di[indx_hibm]
-        self.hibm_img = hibm_img = self.make_image(working_dir + filepath_light_hi, c.lbl_h)
+        self.hibm_img = hibm_img = drw_func.make_image(working_dir + filepath_light_hi, c.lbl_h)
         di[indx_hibm].lbl_ref = self.hibm_id = hibm_id = canv.create_image(c.lbl_x0, c.lbl_y0, image=hibm_img, anchor="w")
         canv.itemconfigure(hibm_id, state='hidden')
         di[indx_hibm].alt_func = self.updInd_LITE
@@ -176,11 +262,11 @@ class MainWindow(tk.Tk):
         #RPM label
         c = di[indx_rpm]    #assign temp class var copy of this specific index for shorthand
         #place background rounded rectangle
-        self.rpm_bg_rect = rpm_bg_rect = self.draw_round_rect(canv, 360,142,360,65)
+        self.rpm_bg_rect = rpm_bg_rect = drw_func.draw_round_rect(canv, 360,142,360,65)
         #place data label caption
-        self.rpm_capt = rpm_capt = self.draw_txt_lbl(self, txt=c.capt); self.rpm_capt.place(x=c.capt_x0,y=c.capt_y0, height=c.capt_h)
+        self.rpm_capt = rpm_capt = drw_func.draw_txt_lbl(self, txt=c.capt); self.rpm_capt.place(x=c.capt_x0,y=c.capt_y0, height=c.capt_h)
         #place data label, bound to stringvar
-        self.lbl_rpm = self.draw_txt_lbl(self, strvar=c.val, anchor="e")
+        self.lbl_rpm = drw_func.draw_txt_lbl(self, strvar=c.val, anchor="e")
         self.lbl_rpm.place(x=c.lbl_x0,y=c.lbl_y0, height=c.lbl_h, width=c.lbl_w)
         #update other functions for the "data channel"
         di[indx_rpm].lbl_ref = self.lbl_rpm                            #label reference for updating
@@ -189,9 +275,9 @@ class MainWindow(tk.Tk):
         
         #ECT label
         c = di[indx_ect]
-        self.bg_ect_rect = bg_ect_rect = self.draw_round_rect(canv, 100,250,320,64)
-        self.ect_capt = ect_capt = self.draw_txt_lbl(self, txt=c.capt); self.ect_capt.place(x=c.capt_x0,y=c.capt_y0, height=c.capt_h)
-        self.lbl_ect = self.draw_txt_lbl(self, strvar=c.val, anchor="e")
+        self.bg_ect_rect = bg_ect_rect = drw_func.draw_round_rect(canv, 100,250,320,64)
+        self.ect_capt = ect_capt = drw_func.draw_txt_lbl(self, txt=c.capt); self.ect_capt.place(x=c.capt_x0,y=c.capt_y0, height=c.capt_h)
+        self.lbl_ect = drw_func.draw_txt_lbl(self, strvar=c.val, anchor="e")
         self.lbl_ect.place(x=c.lbl_x0,y=c.lbl_y0, height=c.lbl_h, width=c.lbl_w)
         di[indx_ect].lbl_ref = self.lbl_ect
         di[indx_ect].scope_ref = canv
@@ -199,116 +285,32 @@ class MainWindow(tk.Tk):
 
         #wbo2 label
         c = di[indx_o2]
-        self.bg_o2_rect = bg_o2_rect = self.draw_round_rect(canv, 604,250,320,64)
-        self.o2_capt = o2_capt = self.draw_txt_lbl(self, txt=c.capt); self.o2_capt.place(x=c.capt_x0,y=c.capt_y0, height=c.capt_h)
-        self.lbl_wbo2 = self.draw_txt_lbl(self, strvar=c.val, anchor="e")
+        self.bg_o2_rect = bg_o2_rect = drw_func.draw_round_rect(canv, 604,250,320,64)
+        self.o2_capt = o2_capt = drw_func.draw_txt_lbl(self, txt=c.capt); self.o2_capt.place(x=c.capt_x0,y=c.capt_y0, height=c.capt_h)
+        self.lbl_wbo2 = drw_func.draw_txt_lbl(self, strvar=c.val, anchor="e")
         self.lbl_wbo2.place(x=c.lbl_x0,y=c.lbl_y0, height=c.lbl_h, width=c.lbl_w)
         di[indx_o2].lbl_ref = self.lbl_wbo2
         di[indx_o2].scope_ref = canv
 
         #OilP label
         c = di[indx_oilp]
-        self.bg_oilp_rect = bg_oilp_rect = self.draw_round_rect(self.canvas_bg, 100,360,320,64)
-        self.oilp_capt = oilp_capt = self.draw_txt_lbl(self, txt=c.capt); self.oilp_capt.place(x=c.capt_x0,y=c.capt_y0, height=c.capt_h)
-        self.lbl_oilp = self.draw_txt_lbl(self, strvar=c.val, anchor="e")
+        self.bg_oilp_rect = bg_oilp_rect = drw_func.draw_round_rect(self.canvas_bg, 100,360,320,64)
+        self.oilp_capt = oilp_capt = drw_func.draw_txt_lbl(self, txt=c.capt); self.oilp_capt.place(x=c.capt_x0,y=c.capt_y0, height=c.capt_h)
+        self.lbl_oilp = drw_func.draw_txt_lbl(self, strvar=c.val, anchor="e")
         self.lbl_oilp.place(x=c.lbl_x0,y=c.lbl_y0, height=c.lbl_h, width=c.lbl_w)
         di[indx_oilp].lbl_ref = self.lbl_oilp
         di[indx_oilp].scope_ref = canv
 
         #MAP label
         c = di[indx_map]
-        self.bg_map_rect = bg_map_rect = self.draw_round_rect(self.canvas_bg, 604,360,320,64)
-        self.map_capt = map_capt = self.draw_txt_lbl(self, txt=c.capt); self.map_capt.place(x=c.capt_x0,y=c.capt_y0, height=c.capt_h)      
-        self.lbl_map = self.draw_txt_lbl(self, strvar=c.val, anchor="e")
+        self.bg_map_rect = bg_map_rect = drw_func.draw_round_rect(self.canvas_bg, 604,360,320,64)
+        self.map_capt = map_capt = drw_func.draw_txt_lbl(self, txt=c.capt); self.map_capt.place(x=c.capt_x0,y=c.capt_y0, height=c.capt_h)      
+        self.lbl_map = drw_func.draw_txt_lbl(self, strvar=c.val, anchor="e")
         self.lbl_map.place(x=c.lbl_x0,y=c.lbl_y0, height=c.lbl_h, width=c.lbl_w)
         di[indx_map].lbl_ref = self.lbl_map
         di[indx_map].scope_ref = canv
         
     #-----support classes/functions
-    ''' @brief: draw roung rectangle
-        @param: canv    - canvas object rectangle is being placed on
-                x0, y0  - initial anchor points (*of the top-left corner)
-                w,h     - width and height
-                r       - corner radius
-        @notes: default kwargs set to standard values
-        @retrn: rounded rectangle object  
-    '''
-    def draw_round_rect(self, canv, x0, y0, w, h, r=20, **kwargs):
-        #special thanks to SneakyTurtle on stackoverflow for this
-        #remeber with **kwargs any of the default options works
-        x1=x0+w; y1=y0+h
-        points = [  x0+r, y0, x0+r, y0,
-                    x1-r, y0, x1-r, y0,
-                    x1, y0,
-                    x1, y0+r, x1, y0+r,
-                    x1, y1-r, x1, y1-r,
-                    x1, y1,
-                    x1-r, y1, x1-r, y1,
-                    x0+r, y1, x0+r, y1,
-                    x0, y1,
-                    x0, y1-r, x0, y1-r,
-                    x0, y0+r, x0, y0+r,
-                    x0, y0]
-        
-        #do some default appearance assignments via kwargs
-        kwargs.setdefault("width", 3)
-        kwargs.setdefault("fill", bg_color)
-
-        return canv.create_polygon(points, smooth = True, **kwargs) #return created polygon
-    
-    ''' @brief: draw cicle
-        @param: canv    - canvas object rectangle is being placed on
-                x0, y0  - initial anchor points (*of the top-left corner)
-                scale   - x/y size scale (in pixels) to get to x1, y1
-        @notes: modified from the draw elipse to just have a square scale
-        @retrn: circle canvas object 
-    '''
-    def draw_circle(self, canv, x0, y0, scale, **kwargs):
-        #default kwarg assignments
-        kwargs.setdefault("width", 3)
-        kwargs.setdefault("fill", bg_color)
-        kwargs.setdefault("outline", lbl_otln_color)
-        return canv.create_oval(x0,y0,x0+scale, y0+scale, **kwargs) #return circle object
-    
-    ''' @brief: draw text label
-        @param: scope   - window or scope the tkinter object is being created in
-                txt     - text to be hard-fixed to the label (if its a static label)
-                strvar  - stringVar to be assigned to the label (for dynamic labels)
-        @notes: modified from the draw elipse to just have a square scale
-        @retrn: label object 
-    '''
-    def draw_txt_lbl(self, scope, txt=None, strvar=None, **kwargs):
-        tmp_lbl = tk.Label(scope)                                   #create temp label
-
-        #do some default appearance assignments via kwargs
-        kwargs.setdefault("font", default_font) 
-        kwargs.setdefault("fg", lbl_fg_color)    
-        kwargs.setdefault("bg", bg_color)       
-        kwargs.setdefault("anchor", "w")
-
-        tmp_lbl.config(**kwargs)                                    #apply configuration
-        if txt is not None: tmp_lbl.config(text=txt.upper())        #assign text if passed
-        if strvar is not None: tmp_lbl.config(textvariable=strvar)  #and/or bind label to if passed
-        return tmp_lbl
-    
-    ''' @brief: place image
-        @param: canv    - canvas object rectangle is being placed on
-                x, y    - anchor points (*of the top-left corner)
-                h_scale - height scale of desired output
-        @notes: the height scale is passed and then for non-square images
-                the width-scale is calculated. It's not exact but is 
-                "rounded" via truncation to the closest value.
-        @retrn: image canvas object 
-    '''
-    def make_image(self, img, h_scale=None):
-        self.i_img = i_img = Image.open(img)                        #open passed image
-        if h_scale is not None:                                     #rescale image
-            w_scale = int(i_img.width*h_scale / i_img.height)       #get width scale
-            self.r_img = r_img = i_img.resize((w_scale,h_scale))    #and resize
-        else: self.r_img = r_img = i_img                            #otherwise leave native size
-        self.tmp_img = tmp_img = ImageTk.PhotoImage(r_img)          #create tk Image after any modification
-        return ImageTk.PhotoImage(r_img)                            #return image object
-
     ''' @brief: update display
         @param: (none)
         @notes: function serves as a "refresh" type function to update the
@@ -444,10 +446,147 @@ class MainWindow(tk.Tk):
         else:                                   #both off, show nothing
             lo_canv.itemconfigure(lo_ind, state='hidden')
             hi_canv.itemconfigure(hi_ind, state='hidden')
-
 #end of main window class
+
+#-----------------------------class for settings frame
+''' @brief: Settings frame
+    @notes: frame shows all the common configurable items like backlight PWM
+'''
+class Wndw_Settings(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        
+        self.frame_eles()           #place frame elements
+        self.upd_dsply()            #start updating display after init
+
+    ''' @brief: frame elements
+        @param: (none)
+        @notes: function contains all the widgets/objects for the default
+                window to be displayed
+        @retrn: (none)
+    '''
+    def frame_eles(self):
+        self.bgimg = bgimg = tk.PhotoImage(file = working_dir + filepath_bg_img)            #background image
+        canv = self.canvas_bg = canvas_bg = tk.Canvas(self, width=disp_xSz, height=disp_ySz)    #use canvas to take advantage of the transparencies in the bgimg
+        canv.pack(expand=True)
+        canv.configure(borderwidth=0,highlightthickness=0)        #remove the border and highlight thickness (kind of the white border)
+        canv.configure(bg=bg_color)                               #configure background color of the canvas
+        canv.create_image((disp_xc,disp_yc), image=bgimg)         #add image
+        
+        capt = drw_func.draw_txt_lbl(self, txt="Dash Settings", font=default_font_sm); capt.place(x=10,y=10, height=noPad_height_sm)
+        self.settings_listbox = tk.Listbox(self, font=sniffer_font, fg=lbl_fg_color, bg=bg_color)
+        self.settings_listbox.place(x=10, y=80, height=500, width=900)
+        
+    ''' @brief: update listbox
+        @param: (none)
+        @notes: function updates/populates the listbox with the RX'd CAN data
+                formats PID to a 0x000 format (for extended IDs) and data 
+                into a [0x00, 0x00, ...., 0x00] format.
+        @retrn: (none)
+    '''
+    def listbox_update(self):
+        self.settings_listbox.delete(0, tk.END)                                 #clear listbox
+        for key, value in dash_config.setngs.items():                           #cycle through entries in data dict
+            string = f"{key}:\t\t{value}"                                       #make the display string
+            self.settings_listbox.insert(tk.END, string)                        #insert display string
+
+    ''' @brief: update display
+        @param: (none)
+        @notes: function serves as a "refresh" type function to update the
+                various stringvars as well as some formatting conditions like
+                the warning/error text colors, etc.
+        @retrn: (none)
+    '''
+    def upd_dsply(self):
+        self.listbox_update()                       #update listbox
+        self.after(refresh_rate, self.upd_dsply)    #continue to update every interval
+#end of the settings frame
+
+#-----------------------------class for CAN sniffer frame
+''' @brief: CAN sniffer frame
+    @notes: frame is a list box with all the RX'd CAN data 
+'''
+class Wndw_CANsniff(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+
+        self.frame_eles()           #place frame elements
+        self.upd_dsply()            #start updating display after init
+
+    ''' @brief: frame elements
+        @param: (none)
+        @notes: function contains all the widgets/objects for the default
+                window to be displayed
+        @retrn: (none)
+    '''
+    def frame_eles(self):
+        self.bgimg = bgimg = tk.PhotoImage(file = working_dir + filepath_bg_img)            #background image
+        canv = self.canvas_bg = canvas_bg = tk.Canvas(self, width=disp_xSz, height=disp_ySz)    #use canvas to take advantage of the transparencies in the bgimg
+        canv.pack(expand=True)
+        canv.configure(borderwidth=0,highlightthickness=0)        #remove the border and highlight thickness (kind of the white border)
+        canv.configure(bg=bg_color)                               #configure background color of the canvas
+        canv.create_image((disp_xc,disp_yc), image=bgimg)         #add image
+        
+        capt = drw_func.draw_txt_lbl(self, txt="CAN Sniffer", font=default_font_sm); capt.place(x=10,y=10, height=noPad_height_sm)
+        self.CANdata_listbox = tk.Listbox(self, font=sniffer_font, fg=lbl_fg_color, bg=bg_color)
+        self.CANdata_listbox.place(x=10, y=80, height=500, width=900)
+        
+    ''' @brief: update listbox
+        @param: (none)
+        @notes: function updates/populates the listbox with the RX'd CAN data
+                formats PID to a 0x000 format (for extended IDs) and data 
+                into a [0x00, 0x00, ...., 0x00] format.
+        @retrn: (none)
+    '''
+    def listbox_update(self):
+        self.CANdata_listbox.delete(0, tk.END)                                  #clear listbox
+        for key, value in CAN_rawData.data.items():                             #cycle through entries in raw data dict
+            string = f"0x{key:03X}"                                             #make the display string
+            data_string = '[{}]'.format(', '.join(f"0x{x:02X}" for x in value))
+            string = string + "  |  " + data_string
+            self.CANdata_listbox.insert(tk.END, string)                         #insert display string
+
+    ''' @brief: update display
+        @param: (none)
+        @notes: function serves as a "refresh" type function to update the
+                various stringvars as well as some formatting conditions like
+                the warning/error text colors, etc.
+        @retrn: (none)
+    '''
+    def upd_dsply(self):
+        self.listbox_update()                       #update listbox
+        self.after(refresh_rate, self.upd_dsply)    #continue to update every interval
+#end of the CAN sniffer frame
+
+#-----------------------------class for error viewing frame
+''' @brief: Current Errors frame
+    @notes: frame is a list box with any current logged issues/errors
+'''
+class Wndw_Errs(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.frame_eles()           #place frame elements
+
+    ''' @brief: frame elements
+        @param: (none)
+        @notes: function contains all the widgets/objects for the default
+                window to be displayed
+        @retrn: (none)
+    '''
+    def frame_eles(self):
+        self.bgimg = bgimg = tk.PhotoImage(file = working_dir + filepath_bg_img)            #background image
+        canv = self.canvas_bg = canvas_bg = tk.Canvas(self, width=disp_xSz, height=disp_ySz)    #use canvas to take advantage of the transparencies in the bgimg
+        canv.pack(expand=True)
+        canv.configure(borderwidth=0,highlightthickness=0)        #remove the border and highlight thickness (kind of the white border)
+        canv.configure(bg=bg_color)                               #configure background color of the canvas
+        canv.create_image((disp_xc,disp_yc), image=bgimg)         #add image
+        capt = drw_func.draw_txt_lbl(self, txt="Current Errors View", font=default_font_sm); capt.place(x=10,y=10, height=noPad_height_sm)
+#end of the errors frame
 
 #-----------------------------main loop
 if __name__ == "__main__":
-    app = MainWindow()
+    app = RootWindow()
     app.mainloop()
