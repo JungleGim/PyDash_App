@@ -29,6 +29,50 @@ Additional details on the design considerations, required packages, and key feat
 ## Future Development
 The below is a list of wants/needs for future revisions; loosely listed in order of importance.
 - A lot of the various "constants" defined everywhere should be converted to a dictionary
+- Currently, the screen navigation has a "back" function to go to the previous screen. Since the 
+    "previous frame" variable that controls this only works with a single "back" its more of a 
+    "go to previous" than a true "go back" function. If there were multiple levels to go "back" to it
+    would break in it's current implementation.
+
+    Update the functionality of the "previous frame" var to a list of frames instead. Each time the user
+    goes to the "next" frame level, it'll append to the list. Then each time the user selects the "back"
+    button in an appropriate frame, a function can use the .pop() command to pull it off the list and
+    navigate to the previous frame.
+    
+    for this to work properly, would have to track if a frame is a "subscreen" or not. If the frame is
+    not a "subscreen", then it should NOT be appended to the list (e.g. if just navigating around the 
+    home screens). The "settings" screen would be a great example of a sub-screen.
+
+    EXAMPLE:
+    At the home screen on initial start it should be a blank list. navigating to different
+    gauge windows should stay blank. Going into "settings" the list would be whatever window the user
+    came from, say [Gauge0]. Then if theres another settings sub-window it would be 
+    [Gauge0, settings] (when in the settings_sub1 window), etc. Then clicking the "back" button
+    would pop "settings" off and return from "setttings_sub1" to "settings". The list then would be
+    [Gauge0]. Clicking the "back" button again would pop "Gauge0" off and return from "settings" to
+    "Gauge0".
+
+    - make a "goto_prev_frame" type function to handle this.
+
+- Create a new "errors" view
+    - need a class and frame for "current error"
+        *class could be used globally for tracking errors (what/where/severity, etc.)
+        *view would show any logged/resolved issues.
+
+- Organize the main code 
+    - as an example, the "update stringvars" function could be easily placed in the main window class, this doesn't
+        have to be a "global" by any means.
+    - think about moving the CAN instancing and values into the "CAN defines" file. Alternatively, this could
+        also be in the main window class instead of a "global"
+    - the "update listbox" function should be moved to the "draw funcs" class. Do similar to others where the
+        object, data to include, and reference are passed
+    - move the "goto_frames", and "frame_switch" functions to the "SCRNdefines" file in the "scrn" struct. 
+        will need a "scope" var passed to them so when instancing the frames they're referenced correctly back 
+        to the master window. Maybe not since the frame (As instanced/stored in the dict) already
+        has that information?
+    - after moving the "goto_frames" and "frame_Switch" funcs, it would also subsume the need for updating the
+        callback in the main window (since it would exist in the instanced screen class 
+        in that file already) which would make things much cleaner.
 - Now that a better class structure and frames are being used, many of the high-level CAN functions should be placed into the main window class, not just as a global routine. This isn't super critical from an operation standpoint but would help make things more refined.
 - Some of the view functions like the "color update" for out-of-range values are going to be used across multiple view frames. These should be placed into the master class so they're able to be referenced by multiple views. I think it fits better into the master class object vs placing them into the `drawFuncs` or drawing function library, just because they are specific to the dash operation (vs a graphical drawing tool).
 - Implement multiple views with window switching on GPIO button presses
@@ -181,7 +225,6 @@ The following discusses some of the code elements and library files along with t
 		- The `screen info` class that contains the available frames, as well as opening/closing/moving/updating frame functions is defined here.
 
 #### Code Elements
-TODO: Discuss the various code elements like classes and function groups and what the purpose of them are.
 - CAN bus
 	- Once the CAN phsyical layer is established, generally the defined listener routine handles any processing of the data
 	- Primarity, the `upd_CAN_data` function's job is to upate the values of any displayed labels/elements
@@ -204,10 +247,15 @@ TODO: Discuss the various code elements like classes and function groups and wha
 	- The intent of this class is to handle the display switching and various elements that go along with it.
 	- Future use also includes a class to handle global definitions like backlight PWM control
 	- The class itself tracks a list of all the available frames that contain different view information, the current frame displayed as a way of state handling, and also any functions related to switching views
+
+- Class: dash_settings
+	- found in the `dash_defines` library file
+	- The intent of this class is to handle any of the high-level like, core system level settings
+   	- Pretty sparse for now, but eventually will house any of the user-configurable settings like the backlight level, CAN base address, and others. 
+
 - View switching
-	- This aspect of the app is currently in development
 	- The indended function is to handle any user inputs from the GPIO physical buttons. This primarily focuses on display switching but also includes things like how various elements on the current view respond to a button push.
-	- Initial attempts with this are handled in a "state machine" manner where the current view/frame being displayed dictates how the various button pushes are handled. This was chosen because the various buttons may have different actions depending on the current view.
+	- Initial attempt with this is handled in a "state machine" manner where the current view/frame being displayed dictates how the various button pushes are handled. This was chosen because the various buttons may have different actions depending on the current view.
 	- A potential concern with this is that it can/could get rather large and honestly kind of gangly. I'm currently not sure what a best practice is for this type of thing and/or what a good approach would be.
 
 # Known bugs and bug fixes
