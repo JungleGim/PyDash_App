@@ -28,12 +28,12 @@ disp_yc = disp_ySz/2    #display center, y-dim
         5- Enter/select
         6- Scroll Down
 """
-dash_btn1 = 15
-dash_btn2 = 16
-dash_btn3 = 17
-dash_btn4 = 18
-dash_btn5 = 19
-dash_btn6 = 20
+dash_btn1 = 24
+dash_btn2 = 19
+dash_btn3 = 6
+dash_btn4 = 2
+dash_btn5 = 4
+dash_btn6 = 27
 
 # debounce time set to 200ms, should be ok with external debounce network but can adjust if needed
 btn_bouncetime = 200                #button debounce time in ms

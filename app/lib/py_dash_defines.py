@@ -19,8 +19,8 @@ hibm_on = 0xFA      #highbeam on signal
                             #not nesc the actual py script directory
 
 #working_dir = "C:/Users/jlang/Desktop/py_dash_r0_20250505" #windows dev dir
-#working_dir = "/root/py_dash"                              #deployment dir
-working_dir = "/home/pi/Desktop/py_dash_r1a_20250517"		#test pi development
+working_dir = "/root/py_dash"                               #deployment dir
+#working_dir = "/home/pi/Desktop/py_dash_r1a_20250517"		#test pi development
 filepath_bg_img =       "/images/bckgrnd_image.png"
 filepath_bg_img_RPM =   "/images/bckgrnd_image_RPM.png"     #background image with RPM bar-graph cutout
 filepath_light_lo =     "/images/headlight_lo.png"

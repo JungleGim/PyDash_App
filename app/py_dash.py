@@ -488,7 +488,7 @@ class Wndw_Settings(tk.Frame):
     def listbox_update(self):
         self.settings_listbox.delete(0, tk.END)                                 #clear listbox
         for key, value in dash_config.setngs.items():                           #cycle through entries in data dict
-            string = f"{key}:\t\t{value}"                                       #make the display string
+            string = f"{key}:    {value}"                                       #make the display string
             self.settings_listbox.insert(tk.END, string)                        #insert display string
 
     ''' @brief: update display
