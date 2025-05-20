@@ -145,7 +145,7 @@ class RootWindow(tk.Tk):
     
     def init_wndw(self):
         #----window settings/info
-        #self.overrideredirect(True)                         #override direct gets rid of the title bar (fullscreen)
+        self.overrideredirect(True)                         #override direct gets rid of the title bar (fullscreen)
         self.title("Electron Racing Dash")                  #title bar for testing
         disp_res = str(disp_xSz)+'x'+str(disp_ySz)+"+0+0"   #make string for geometry and placement
         self.geometry(disp_res)                             #window size and palcement
