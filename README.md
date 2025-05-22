@@ -17,7 +17,7 @@ Additional details on the design considerations, required packages, and key feat
 - Rev 0: 06/02/2024
 	- Initial issue
 	- PyDash consists of 5 common engine parameters on a single screen
- - Rev1a: 05/17/2025
+ - Rev1a: 05/19/2025
    	- Added multi-frame (multi-view) capability
    	- Added GPIO (button) interrupt capability
    	- Can navigate between views with external buttons
