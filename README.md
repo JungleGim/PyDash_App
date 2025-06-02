@@ -1,7 +1,7 @@
 # PyDash_App - Information
 This readme covers the application or "App" portion of the PyDash. For the PCB design, Enclosure design, or OS design, see the below repositories:
 - PyDash_PCB
-- PyDash_App
+- [PyDash_OS](https://github.com/JungleGim/PyDash_OS)
 - PyDash_Enclosure
 
 ## Introduction
