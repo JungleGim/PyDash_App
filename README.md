@@ -28,6 +28,18 @@ Additional details on the design considerations, required packages, and key feat
 	
 ## Future Development
 The below is a list of wants/needs for future revisions; loosely listed in order of importance.
+
+### Critical items for immediate development 
+- Implement a configuration XML file that is read on boot
+	- Intent is to store all the display parameters into a XML file that can be externally edited.
+	- This includes things like the base CAN PID, the various gauge vies, color themes, etc.
+- Implement config file read on boot
+- Enable/update USB communication related features
+	- Overall intent would be to load a new settings file that has been sent to the PyDash. The main part of this is largely a hardware consideration where the PyDash_OS needs to be set up for USB device operation. Not much in the PyDash_App needs to be done.
+- Create desktop multi-platform app as a display editor (not required for PyDash_App but would make it a much better user experience)
+- Implement data logging of all RX'd CAN channels
+
+### Additional future development
 - A lot of the various "constants" defined everywhere should be converted to a dictionary
 - Currently, the screen navigation has a "back" function to go to the previous screen. Since the 
     "previous frame" variable that controls this only works with a single "back" its more of a 
@@ -91,8 +103,6 @@ The below is a list of wants/needs for future revisions; loosely listed in order
 	- If data not rx'd every given period for a channel, then display "NO DAT" or some other warning on the display
 - Simplify the RPM bar graph to be just a plain rectangle. Currently a transparency window is used to give it a "shape" but that's not needed and causes some extra work to make a new background image.
 	- Ideally, could figure out how to make an alpha-channel mask for custom shapes
-- Enable/update USB communication related features
-	- Overall intent would be to load a new settings file that has been sent to the PyDash. The main part of this is largely a hardware consideration where the PyDash_OS needs to be set up for USB device operation. Not much in the PyDash_App needs to be done.
 - Make a compile script to package the compiled/completed app into a target directory.
 
 ## Repository Directory Map
