@@ -30,6 +30,10 @@ Additional details on the design considerations, required packages, and key feat
 The below is a list of wants/needs for future revisions; loosely listed in order of importance.
 
 ### Critical items for immediate development 
+- Current display channels are based on a broadcast network architecture. Update/enable remote request
+	- For the current system, all CAN related params are broadcast on individual intervals. This is fixed to the remote module and the dash simply displays the RX'd information
+   	- This doesn't work well for OE ECU's that have remote requests for the applciable PIDs and also, generally, a broadcast network can easily be saturated
+   	- Update the dash display channel configuration class to have a boolean for "remote_req" and then "req_interval" to set the control params for remote request channels
 - Implement a configuration XML file that is read on boot
 	- Intent is to store all the display parameters into a XML file that can be externally edited.
 	- This includes things like the base CAN PID, the various gauge vies, color themes, etc.
