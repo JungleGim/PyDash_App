@@ -1,8 +1,10 @@
 # PyDash_App - Information
 This readme covers the application or "App" portion of the PyDash. For the PCB design, Enclosure design, or OS design, see the below repositories:
 - PyDash_PCB
+- [PyDash_App](https://github.com/JungleGim/PyDash_App)
 - [PyDash_OS](https://github.com/JungleGim/PyDash_OS)
 - PyDash_Enclosure
+- [PyDash_Builder](https://github.com/JungleGim/PyDash_Builder)
 
 ## Introduction
 The PyDash_App is a python script that serves as an automotive dash display. The intended use is on a custom PCB utilizing a Raspberry Pi compute module that serves as the processor for a digital dash. Key features include:
