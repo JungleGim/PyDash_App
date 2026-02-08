@@ -1,0 +1,382 @@
+<?xml version='1.0' encoding='utf-8'?>
+<DASH>
+  <DISP>
+    <RES_X>1024</RES_X>
+    <RES_Y>600</RES_Y>
+    <REFRESH>67</REFRESH>
+    <BAKLITE>100</BAKLITE>
+  </DISP>
+  <THEME>
+    <COLORS>
+      <COLOR NAME="BG">#636363</COLOR>
+      <COLOR NAME="FG">#FFFFFF</COLOR>
+      <COLOR NAME="IND_ON">#00FF00</COLOR>
+      <COLOR NAME="IND_OFF">#636363</COLOR>
+      <COLOR NAME="ALERT_FG">#000000</COLOR>
+      <COLOR NAME="ALERT_WARN">#FFFF00</COLOR>
+      <COLOR NAME="ALERT_DNGR">#FF0000</COLOR>
+      <COLOR NAME="FG_accent">#02C6D0</COLOR>
+      <COLOR NAME="FG_accent2">#FF8040</COLOR>
+    </COLORS>
+    <ALERT_COLORS>
+      <ALERT_FG>ALERT_FG</ALERT_FG>
+      <ALERT_WARN>ALERT_WARN</ALERT_WARN>
+      <ALERT_DNGR>ALERT_DNGR</ALERT_DNGR>
+    </ALERT_COLORS>
+    <FONTS>
+      <FONT NAME="SZ_DEFLT">('Sui Generis', '48', 'normal', 'roman')</FONT>
+      <FONT NAME="SZ_SMAL">('Sui Generis', '36', 'normal', 'roman')</FONT>
+      <FONT NAME="SZ_TNY">('Sui Generis', '24', 'normal', 'roman')</FONT>
+      <FONT NAME="SZ_Large">('Sui Generis', '72', 'normal', 'roman')</FONT>
+    </FONTS>
+    <IMAGES>
+      <IMG NAME="IMG_BG">Background.png</IMG>
+      <IMG NAME="IMG_LOBM">Headlight_lo.png</IMG>
+      <IMG NAME="IMG_HIBM">Headlight_hi.png</IMG>
+    </IMAGES>
+  </THEME>
+  <CAN>
+    <CORE>
+      <BASE_PID>0x9A</BASE_PID>
+      <RX_FILTER>False</RX_FILTER>
+    </CORE>
+    <CHANNELS>
+      <CH NAME="RPM">
+        <PID>0x63</PID>
+        <EXT>False</EXT>
+        <DLC>2</DLC>
+        <REM_REQ>False</REM_REQ>
+        <REQ_FREQ />
+        <FRAMES>1,2</FRAMES>
+        <SCALAR>0</SCALAR>
+        <OFFSET>0</OFFSET>
+      </CH>
+      <CH NAME="ECT">
+        <PID>0x43</PID>
+        <EXT>False</EXT>
+        <DLC>2</DLC>
+        <REM_REQ>False</REM_REQ>
+        <REQ_FREQ />
+        <FRAMES>1,2</FRAMES>
+        <SCALAR>0</SCALAR>
+        <OFFSET>-65</OFFSET>
+      </CH>
+      <CH NAME="WBO2">
+        <PID>0x73</PID>
+        <EXT>False</EXT>
+        <DLC>2</DLC>
+        <REM_REQ>False</REM_REQ>
+        <REQ_FREQ />
+        <FRAMES>1,2</FRAMES>
+        <SCALAR>0.1</SCALAR>
+        <OFFSET>0</OFFSET>
+      </CH>
+      <CH NAME="OILP">
+        <PID>0x44</PID>
+        <EXT>False</EXT>
+        <DLC>2</DLC>
+        <REM_REQ>False</REM_REQ>
+        <REQ_FREQ />
+        <FRAMES>1,2</FRAMES>
+        <SCALAR>0</SCALAR>
+        <OFFSET>0</OFFSET>
+      </CH>
+      <CH NAME="MAP">
+        <PID>0x45</PID>
+        <EXT>False</EXT>
+        <DLC>2</DLC>
+        <REM_REQ>False</REM_REQ>
+        <REQ_FREQ />
+        <FRAMES>1,2</FRAMES>
+        <SCALAR>0.1</SCALAR>
+        <OFFSET>0</OFFSET>
+      </CH>
+      <CH NAME="LOBM">
+        <PID>0x2B</PID>
+        <EXT>False</EXT>
+        <DLC>1</DLC>
+        <REM_REQ>False</REM_REQ>
+        <REQ_FREQ />
+        <FRAMES>1</FRAMES>
+        <SCALAR>0</SCALAR>
+        <OFFSET>0</OFFSET>
+      </CH>
+      <CH NAME="HIBM">
+        <PID>0x27</PID>
+        <EXT>False</EXT>
+        <DLC>1</DLC>
+        <REM_REQ>False</REM_REQ>
+        <REQ_FREQ />
+        <FRAMES>1</FRAMES>
+        <SCALAR>0</SCALAR>
+        <OFFSET>0</OFFSET>
+      </CH>
+    </CHANNELS>
+  </CAN>
+  <FRAMES>
+    <FRM NAME="Gauge0">
+      <LEVEL>0</LEVEL>
+      <PARENT>MASTER</PARENT>
+      <TYPE>GAUGE</TYPE>
+      <BG_CLR>BG</BG_CLR>
+      <BG_IMG>IMG_BG</BG_IMG>
+      <WIDTH>1024</WIDTH>
+      <HEIGHT>600</HEIGHT>
+      <ELM>
+        <LBL_STATIC>
+          <LBL NAME="RPM_CAPT">
+            <TEXT>RPM</TEXT>
+            <X0>14</X0>
+            <Y0>165</Y0>
+            <FILL>FG_accent</FILL>
+            <FONT>SZ_SMAL</FONT>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+          </LBL>
+          <LBL NAME="ECT_CAPT">
+            <TEXT>ECT</TEXT>
+            <X0>14</X0>
+            <Y0>330</Y0>
+            <FILL>FG_accent</FILL>
+            <FONT>SZ_SMAL</FONT>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+          </LBL>
+          <LBL NAME="lbl_FanInd">
+            <TEXT>FAN:</TEXT>
+            <X0>14</X0>
+            <Y0>520</Y0>
+            <FILL>FG_accent</FILL>
+            <FONT>SZ_SMAL</FONT>
+            <PAD>False</PAD>
+            <CLR_BG>BG</CLR_BG>
+          </LBL>
+          <LBL NAME="OILP_CAPT">
+            <TEXT>OIL P</TEXT>
+            <X0>300</X0>
+            <Y0>330</Y0>
+            <FILL>FG_accent</FILL>
+            <FONT>SZ_SMAL</FONT>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+          </LBL>
+          <LBL NAME="MAP_CAPT">
+            <TEXT>MAP</TEXT>
+            <X0>648</X0>
+            <Y0>350</Y0>
+            <FILL>FG_accent</FILL>
+            <FONT>SZ_SMAL</FONT>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+          </LBL>
+          <LBL NAME="WBO2_CAPT">
+            <TEXT>WB O2</TEXT>
+            <X0>580</X0>
+            <Y0>451</Y0>
+            <FILL>FG_accent</FILL>
+            <FONT>SZ_SMAL</FONT>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+          </LBL>
+          <LBL NAME="RPM_lbl_0k">
+            <TEXT>0</TEXT>
+            <X0>10</X0>
+            <Y0>110</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_TNY</FONT>
+            <PAD>False</PAD>
+            <CLR_BG>None</CLR_BG>
+          </LBL>
+          <LBL NAME="RPM_lbl_2k">
+            <TEXT>2K</TEXT>
+            <X0>270</X0>
+            <Y0>110</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_TNY</FONT>
+            <PAD>False</PAD>
+            <CLR_BG>None</CLR_BG>
+          </LBL>
+          <LBL NAME="RPM_lbl_4k">
+            <TEXT>4K</TEXT>
+            <X0>560</X0>
+            <Y0>110</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_TNY</FONT>
+            <PAD>False</PAD>
+            <CLR_BG>None</CLR_BG>
+          </LBL>
+          <LBL NAME="RPM_lbl_6k">
+            <TEXT>6K</TEXT>
+            <X0>845</X0>
+            <Y0>110</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_TNY</FONT>
+            <PAD>False</PAD>
+            <CLR_BG>None</CLR_BG>
+          </LBL>
+        </LBL_STATIC>
+        <LBL_DATA>
+          <LBL NAME="RPM_DATA">
+            <X0>150</X0>
+            <Y0>165</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_Large</FONT>
+            <DATA_CH>RPM</DATA_CH>
+            <SIGDIG>0</SIGDIG>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+            <WARN_EN>True</WARN_EN>
+            <LIM_DNGRLO>-1</LIM_DNGRLO>
+            <LIM_WARNLO>-1</LIM_WARNLO>
+            <LIM_WARNHI>4500</LIM_WARNHI>
+            <LIM_DNGRHI>6500</LIM_DNGRHI>
+          </LBL>
+          <LBL NAME="ECT_DATA">
+            <X0>14</X0>
+            <Y0>395</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_Large</FONT>
+            <DATA_CH>ECT</DATA_CH>
+            <SIGDIG>0</SIGDIG>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+            <WARN_EN>True</WARN_EN>
+            <LIM_DNGRLO>80</LIM_DNGRLO>
+            <LIM_WARNLO>120</LIM_WARNLO>
+            <LIM_WARNHI>220</LIM_WARNHI>
+            <LIM_DNGRHI>230</LIM_DNGRHI>
+          </LBL>
+          <LBL NAME="OILP_DATA">
+            <X0>300</X0>
+            <Y0>395</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_Large</FONT>
+            <DATA_CH>OILP</DATA_CH>
+            <SIGDIG>0</SIGDIG>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+            <WARN_EN>True</WARN_EN>
+            <LIM_DNGRLO>25</LIM_DNGRLO>
+            <LIM_WARNLO>30</LIM_WARNLO>
+            <LIM_WARNHI>65</LIM_WARNHI>
+            <LIM_DNGRHI>70</LIM_DNGRHI>
+          </LBL>
+          <LBL NAME="MAP_DATA">
+            <X0>810</X0>
+            <Y0>330</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_DEFLT</FONT>
+            <DATA_CH>MAP</DATA_CH>
+            <SIGDIG>1</SIGDIG>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+            <WARN_EN>False</WARN_EN>
+            <LIM_DNGRLO />
+            <LIM_WARNLO />
+            <LIM_WARNHI />
+            <LIM_DNGRHI />
+          </LBL>
+          <LBL NAME="WBO2_DATA">
+            <X0>810</X0>
+            <Y0>432</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_DEFLT</FONT>
+            <DATA_CH>WBO2</DATA_CH>
+            <SIGDIG>1</SIGDIG>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+            <WARN_EN>True</WARN_EN>
+            <LIM_DNGRLO>10.5</LIM_DNGRLO>
+            <LIM_WARNLO>11.5</LIM_WARNLO>
+            <LIM_WARNHI>14.0</LIM_WARNHI>
+            <LIM_DNGRHI>15.0</LIM_DNGRHI>
+          </LBL>
+        </LBL_DATA>
+        <IND_BLT>
+          <LBL NAME="FAN_IND">
+            <X0>160</X0>
+            <Y0>528</Y0>
+            <SIZE>40</SIZE>
+            <LIM_LO>190</LIM_LO>
+            <LIM_HI>210</LIM_HI>
+            <DATA_CH>ECT</DATA_CH>
+            <CLR_LO>BG</CLR_LO>
+            <CLR_HI>FG_accent2</CLR_HI>
+            <OUTLN>FG_accent2</OUTLN>
+          </LBL>
+        </IND_BLT>
+        <IND_BAR>
+          <LBL NAME="RPM_BAR">
+            <X0>10</X0>
+            <Y0>9</Y0>
+            <WIDTH>1000</WIDTH>
+            <HEIGHT>100</HEIGHT>
+            <FILL>FG_accent2</FILL>
+            <OUTLN>FG_accent2</OUTLN>
+            <DATA_CH>RPM</DATA_CH>
+            <ORDR>BG</ORDR>
+            <SCALE_LO>0</SCALE_LO>
+            <SCALE_HI>7000</SCALE_HI>
+            <WARN_EN>True</WARN_EN>
+            <LIM_DNGRLO>-1</LIM_DNGRLO>
+            <LIM_WARNLO>-1</LIM_WARNLO>
+            <LIM_WARNHI>4500</LIM_WARNHI>
+            <LIM_DNGRHI>6500</LIM_DNGRHI>
+          </LBL>
+        </IND_BAR>
+      </ELM>
+    </FRM>
+    <FRM NAME="Gauge1">
+      <LEVEL>0</LEVEL>
+      <PARENT>MASTER</PARENT>
+      <TYPE>GAUGE</TYPE>
+      <BG_CLR>BG</BG_CLR>
+      <BG_IMG>IMG_BG</BG_IMG>
+      <WIDTH>1024</WIDTH>
+      <HEIGHT>600</HEIGHT>
+      <ELM>
+        <LBL_STATIC>
+          <LBL NAME="Gauge1_Hdr">
+            <TEXT>GAUGE 1</TEXT>
+            <X0>10</X0>
+            <Y0>10</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_SMAL</FONT>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+          </LBL>
+          <LBL NAME="lbl_Btn4">
+            <TEXT>BTN 4</TEXT>
+            <X0>850</X0>
+            <Y0>49</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_SMAL</FONT>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+          </LBL>
+          <LBL NAME="lbl_Btn5">
+            <TEXT>BTN 5</TEXT>
+            <X0>850</X0>
+            <Y0>265</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_SMAL</FONT>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+          </LBL>
+          <LBL NAME="lbl_Btn6">
+            <TEXT>BTN 6</TEXT>
+            <X0>850</X0>
+            <Y0>475</Y0>
+            <FILL>FG</FILL>
+            <FONT>SZ_SMAL</FONT>
+            <PAD>True</PAD>
+            <CLR_BG>BG</CLR_BG>
+          </LBL>
+        </LBL_STATIC>
+        <LBL_DATA />
+        <IND_BLT />
+        <IND_BAR />
+      </ELM>
+    </FRM>
+  </FRAMES>
+</DASH>
