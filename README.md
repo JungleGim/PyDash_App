@@ -1,6 +1,6 @@
 # PyDash_App - Information
 This readme covers the application or "App" portion of the PyDash. For the PCB design, Enclosure design, or OS design, see the below repositories:
-- PyDash_PCB
+- [PyDash_PCB](https://github.com/JungleGim/PyDash_PCB)
 - [PyDash_App](https://github.com/JungleGim/PyDash_App)
 - [PyDash_OS](https://github.com/JungleGim/PyDash_OS)
 - PyDash_Enclosure
@@ -203,4 +203,5 @@ Throughout the project, I have used many references, related to various aspects/
 - [Tk and Frames - lots of sub-links](https://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter)
 - [rPi GPIO](https://learn.sparkfun.com/tutorials/raspberry-gpio/python-rpigpio-api)
 - [rPi GPIO](https://roboticsbackend.com/raspberry-pi-gpio-interrupts-tutorial/)
+
 
