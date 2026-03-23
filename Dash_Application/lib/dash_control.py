@@ -12,9 +12,11 @@ class dash_control:
         self.prnt_frm = master.prnt_frame   #primary frame that all canvas objects are displayed on
         self.active_page_ref = None         #reference to the current active page being displayed
         self.menu_prev_pages = []           #tuple to track previous nested menu pages
+        self.logging_en = tk.BooleanVar()   #bool to track if logging is currently active or not
 
         self.usrBtns_init()                 #initialize user input controls - Needed immediately for menus / error navigation
 
+        #REMINDER: list is 0-indexed but physical buttons are 1's index
         #---default user menu page button actions
         self.dflt_user_pg_btns = [None,
                                   self.goto_menu_FirstPage,
