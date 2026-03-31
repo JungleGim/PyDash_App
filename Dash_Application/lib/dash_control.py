@@ -342,8 +342,8 @@ class dash_control:
         """
         ele_refID, ele_padID = self.instance_widget(ele_type,
                                                     ref_canv,
-                                                    ele_cfg.get_edtr_wgt_kwargs())  #create new widget and assign to object ref in class
-        ele_cfg.upd_config({'objID':ele_refID, 'padID':ele_padID})                  #set self refID and background pad refID
+                                                    ele_cfg.get_edtr_wgt_kwargs())      #create new widget and assign to object ref in class
+        ele_cfg.upd_config({'canv_ref':ref_canv, 'objID':ele_refID, 'padID':ele_padID}) #set reference IDs for later updating
 
     def instance_widget(self, ele_type, prnt_canv, widg_kwargs):
         """function to create a new element in the dash page editor. If only an opbject is created, the
@@ -380,7 +380,7 @@ class dash_control:
             pad_ref = self.elePad_create(prnt_canv, wigt_ref, clr_bg)   
             return wigt_ref, pad_ref        #and return created widget reference and pad object reference
         else: return wigt_ref, None         #otherwise, only return created widget reference
-
+    
     def elePad_create(self, prnt_canv, prnt_wgt, pad_clr):
         """function supports dash element creation. If element has a "background pad" rectangle, this function
         is used to create it.
@@ -388,7 +388,7 @@ class dash_control:
         :param prnt_canv: parent canvas to make object on
         :type prnt_canv: `Tk.Canvas` class
         :param prnt_wgt: parent object ID the background pad is placed behind
-        :type prnt_wgt: dash element class reference
+        :type prnt_wgt: dash element canvas ID reference
         :param pad_clr: fill color
         :type pad_clr: HEX string color value
         :returns: tuple of reference ID of the created object
@@ -397,11 +397,30 @@ class dash_control:
         prntX0, prntY0, prntX1, prntY1 = prnt_canv.bbox(prnt_wgt)           #find the size of the parent widget
         padX0=prntX0-sys_pad_margin; padX1=prntX1+sys_pad_margin            #calculate X0, x1 for background pad object
         padY0=prntY0; padY1=prntY1                                          #calcualte Y0, Y1 for background pad object
-        pad_ref_id = self.draw_rectangle(prnt_canv, padX0, padY0, padX1, padY1, pad_clr)    #create the background pad rectangle
+        pad_ref_id = self.draw_rectangle(prnt_canv, pad_clr, padX0, padY0, padX1, padY1)  #create the background pad rectangle
         prnt_canv.tag_lower(pad_ref_id, prnt_wgt)                           #place the background pad below the parent widget
         return pad_ref_id   #return the background pad ID
     
-    def draw_rectangle(self, prnt_canv, x0, y0, x1, y1, clr, r=sys_dflt_pad_radius):
+    def elePad_update(self, prnt_canv, prnt_wgt, pad_objID, kwargs):
+        """funciton updates a background pad object associated with another dash element. This is primarily used when
+        re-sizing the background padding to fit numbers changing/scaling, however the 'kwargs' argument can also be used
+        to update things like its fill color
+        :param prnt_canv: parent canvas to make object on
+        :type prnt_canv: `Tk.Canvas` class
+        :param prnt_wgt: parent object ID the background pad is placed behind
+        :type prnt_wgt: dash element canvas ID reference
+        :param pad_objID: the pad object to update
+        :type pad_objID: background pad object canvas ID reference
+        :param kwargs: additional config items to update
+        :type kwargs: dictionary compatable with canvas.itemconfigure() arguments
+        """
+        prntX0, prntY0, prntX1, prntY1 = prnt_canv.bbox(prnt_wgt)           #find the size of the parent widget
+        padX0=prntX0-sys_pad_margin; padX1=prntX1+sys_pad_margin            #calculate X0, x1 for background pad object
+        padY0=prntY0; padY1=prntY1                                          #calcualte Y0, Y1 for background pad object
+        self.update_rectangle(prnt_canv, pad_objID, padX0, padY0, padX1, padY1)   #update the size of the pad object
+        prnt_canv.itemconfigure(pad_objID, **kwargs)                #update pad object with passed properties
+    
+    def draw_rectangle(self, prnt_canv, clr, x0, y0, x1, y1, r=sys_dflt_pad_radius):
         """function draws a rectagle on the parent canvas. Rectangle is based on the passed coords.
         The start coordinate is upper-left corner of the rectangle, end coordinate is lower-left corner 
         of the rectangle. Can pass an optional value (r) to add a radius to the rectangle corners    
@@ -435,5 +454,19 @@ class dash_control:
                 x0, y1-r, x0, y1-r,
                 x0, y0+r, x0, y0+r,
                 x0, y0]
-        
         return prnt_canv.create_polygon(points, smooth = True, fill=clr)    #create the background polygon and return refID
+    
+    def update_rectangle(self, prnt_canv, rect_ref, x0, y0, x1, y1, r=sys_dflt_pad_radius):
+        points = [x0+r, y0, x0+r, y0,   #create the polycon points
+                x1-r, y0, x1-r, y0,
+                x1, y0,
+                x1, y0+r, x1, y0+r,
+                x1, y1-r, x1, y1-r,
+                x1, y1,
+                x1-r, y1, x1-r, y1,
+                x0+r, y1, x0+r, y1,
+                x0, y1,
+                x0, y1-r, x0, y1-r,
+                x0, y0+r, x0, y0+r,
+                x0, y0]
+        prnt_canv.coords(rect_ref, points)

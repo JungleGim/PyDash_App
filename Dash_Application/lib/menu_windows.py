@@ -123,7 +123,6 @@ class page_menu_settingsMain(menu_page_template):
             string = f"{att}: {val}"                             #make the display string
             self.data_listbox.insert(tk.END, string)            #insert display string
 
-
 class page_menu_CANsniffer(menu_page_template):
     def __init__(self, master_ref):
         """class is for the CAN sniffer window that displays any/all current CAN data
@@ -187,10 +186,13 @@ class page_menu_CANsniffer(menu_page_template):
         """function updates the current page with any changed values"""
         #--update listbox
         self.data_listbox.delete(0, tk.END)                         #clear listbox
-        for pid, dat_frm in self.master_ref.dash_CAN.RX_allData.items():    #loop through raw data
-            #format should be: 0xPID] - [MSB]...[LSB]
-            pid_str = f"0x{pid:03X}"                                                #format the PID value
-            dat_str = '[{}]'.format(', '.join(f"0x{val:02X}" for val in dat_frm))   #format data string
+        """Note: local copy is needed because if during the for loop if a new value is added and the dict
+        size changes, it causes a runtime error."""
+        local_allDat = dict(self.master_ref.dash_CAN.RX_allData)    #make local copy
+        for pid, dat_frm in local_allDat.items():                   #loop through raw CAN data
+            #format should be: 0xPID - [MSB]...[LSB]
+            pid_str = f"0x{pid:03X}"                                                    #format the PID value
+            dat_str = '0x[{}]'.format(', '.join(f"{val:02X}" for val in dat_frm[::-1])) #format data string
             string = pid_str + ' - ' + dat_str                      #make the display string
             self.data_listbox.insert(tk.END, string)                #insert display string
         

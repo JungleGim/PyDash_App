@@ -49,7 +49,7 @@ WarnState_dict = {'DNGR_LO':'alert_dngr',
 def str2dec(val, frmt=10):
     """converts passed value to decimal value
 
-    function can handle a `string`(int), `string`(fraction), `integer`, `float`, 
+    function can handle a `string`(int), `string`(fraction), `integer`, `float`, `string`(hex),
     or `none` type. If passed a `none` or zero-length string, then `none` is returned. If passed value
     is fractional representation, i.e. (1/10) then it is converted into a float (0.1)
 
@@ -70,7 +70,11 @@ def str2dec(val, frmt=10):
         rval = int(num)/int(den)
     elif '.' in val: rval = float(val)          #value has a decimal so use float
     elif frmt == 10: rval = int(val)            #dec format
-    elif frmt == 16: rval = int(val, 16)        #hex format
+    elif frmt == 16:                            #hex format
+        tmpval = str(val).upper()
+        if '0X' in tmpval: tmpval = tmpval.removeprefix('0X')
+        else: tmpval = val
+        rval = int(tmpval, 16)
     
     return rval                                 #default return None if unknown
 
@@ -199,7 +203,7 @@ def get_alert_color(val, dngrLO_lim, warnLO_lim, warnHI_lim, dngrHI_lim):
     if val < dngrLO_lim: rval = WarnState_dict['DNGR_LO']
     elif val < warnLO_lim: rval = WarnState_dict['WARN_LO']
     elif val > dngrHI_lim: rval = WarnState_dict['DNGR_HI']
-    elif val > warnHI_lim: rval = WarnState_dict['DNGR_HI']
+    elif val > warnHI_lim: rval = WarnState_dict['WARN_HI']
 
     return rval
 
@@ -707,7 +711,7 @@ class Label_Data:
         self.font = kwargs.get('FONT', None)
         self.name = kwargs.get('NAME', None)
         self.data_ch = kwargs.get('DATA_CH', None)
-        self.sigdig = kwargs.get('SIGDIG', sys_dat_sigdig)
+        self.sigdig = str2dec(kwargs.get('SIGDIG', sys_dat_sigdig))
         self.pad = str2bool(kwargs.get('PAD', False))
         self.clr_bg = kwargs.get('CLR_BG', False)
         self.warn_en = str2bool(kwargs.get('WARN_EN', None))
@@ -810,28 +814,32 @@ class Label_Data:
         :param mode: (not used) - variable trace related value"""
         thm_ref = self.master_ref.dash_theme            #local ref for dash theme
         thm_clrs = thm_ref.colors                       #local ref for theme colors
+        cntrl_ref = self.master_ref.dash_ctl            #local ref for dash control
         upd_kwargs = {}                                 #temp dict of kwargs to edit/update the displayed widget
         
         new_val = self.CAN_dec_ref.get()                #get current data value
         new_txt = dec2str(new_val, self.sigdig)         #and convert to string
         upd_kwargs.update({'text': new_txt})            #and update text value
 
-        if self.warn_en == True:
-            color_attr = get_alert_color(new_val)       #get the current warning attribute
-            if color_attr is not None:                  #if alert limit set, set BG and fill colors
-                fill_clr_name = thm_clrs[getattr(thm_ref,color_attr)]
-                bg_clr_name = thm_clrs[getattr(thm_ref,WarnState_dict['ALRT_FG'])]
-            else:                                       #otherwise, use default config values
+        if self.warn_en == True:    #if warnings are enabled, check to see if threshold crossed
+            color_attr = get_alert_color(new_val, self.lim_DngrLo, self.lim_WarnLo, self.lim_WarnHi, self.lim_DngrHi)       #get the current warning attribute
+            if color_attr is not None:                  #if alert limit is crossed, set BG and fill colors
+                fill_clr_name = thm_ref.alert_FG
+                bg_clr_name = getattr(thm_ref,color_attr)
+            else:                   #otherwise reset to default
                 fill_clr_name = self.fill
                 bg_clr_name = self.clr_bg
-
-            fill_clr = thm_clrs[fill_clr_name]          #get hex code from theme for color
-            bg_clr = thm_clrs[bg_clr_name]
-            upd_kwargs.update({'fill': fill_clr})       #update fill color
-            if self.pad == True:                        #if padded
-                self.canv_ref.itemconfigure(self.padID, {'fill':bg_clr})    #update pad object
+        else:                       #if no warning enabled, then use default
+            fill_clr_name = self.fill
+            bg_clr_name = self.clr_bg
+        
+        fill_clr = thm_clrs[fill_clr_name]          #get appropriate color hex codes
+        bg_clr = thm_clrs[bg_clr_name]
+        upd_kwargs.update({'fill': fill_clr})       #add fill color to text update kwargs
 
         self.canv_ref.itemconfigure(self.objID, upd_kwargs)             #update canvas object props
+        if self.pad == True:                                            #if padded
+            cntrl_ref.elePad_update(self.canv_ref, self.objID, self.padID, {'fill':bg_clr})     #update pad object
         
 class Indicator_Bullet:
     def __init__(self):
@@ -1116,14 +1124,14 @@ class Indicator_Bar:
         new_val = self.CAN_dec_ref.get()                #get current data value
 
         #--calculate new y1 val
-        new_y1 = self.y0 + (new_val-self.scale_lo)/(self.scale_hi-self.scale_lo)*self.width
-        upd_kwargs.update({'y1': new_y1})
+        new_x1 = self.x0 + (new_val-self.scale_lo)/(self.scale_hi-self.scale_lo)*self.width
+        self.canv_ref.coords(self.objID, self.x0, self.y0, new_x1, self.y1)     #update rectangle size
 
         #--check warning limits
         if self.warn_en == True:
-            color_attr = get_alert_color(new_val)       #get the current warning attribute
+            color_attr = get_alert_color(new_val, self.lim_DngrLo, self.lim_WarnLo, self.lim_WarnHi, self.lim_DngrHi)       #get the current warning attribute
             if color_attr is not None:                  #if alert limit set, set BG and fill colors
-                ele_color_name = thm_clrs[getattr(thm_ref,color_attr)]
+                ele_color_name = getattr(thm_ref,color_attr)
             else:                                       #otherwise, use default config values
                 ele_color_name = self.fill
             ele_color = thm_clrs[ele_color_name]        #get hex code from theme for color

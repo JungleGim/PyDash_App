@@ -26,8 +26,6 @@ class wndw_Main(tk.Tk):
         else:                               #else, ok to build dash pages and start operation
             self.start_dash()
 
-        #self.dash_ctl.goto_page(page_fullscreen_text(self.prnt_frame, 'test page'))        #display test page for debug and tracing
-
     def init_framework(self):
         """function sets up the main display framework and elements needed for any operation"""
         #----window settings/info

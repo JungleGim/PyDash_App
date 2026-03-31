@@ -3,7 +3,7 @@ File:       can.py
 Function:   This file contains any CAN bus specific classes and methods
 """
 from .sys import *
-from .com_defs import create_err_msg
+from .com_defs import create_err_msg, str2dec
 from .com_defs import err_message
 
 class CANch():
@@ -51,17 +51,17 @@ class CANch():
         """
         kwargs = {k.upper(): v for k, v in kwargs.items()}  #convert kwarg names to uppercase. Allows for use with XML and editor attributes
         self.Name = kwargs.get('NAME', None)
-        self.PID = kwargs.get('PID', None)
+        self.PID = str2dec(kwargs.get('PID', None),16)
         self.ext_PID = kwargs.get('EXT', False)
-        self.DLC = kwargs.get('DLC', 1)
+        self.DLC = str2dec(kwargs.get('DLC', 1))
         self.RTR = kwargs.get('REM_REQ', False)
         if self.RTR == True:                            #if RTR enabled
             self.RTR_freq = kwargs.get('REQ_FREQ', sys_RTR_freq_dflt)    #get RTR frequency
         else: self.RTR_freq = None                      #if not enabled then set to none
         
         self.calc_frames = kwargs.get('FRAMES', [1])
-        self.calc_Scalar = kwargs.get('SCALAR', 1)
-        self.calc_Offset = kwargs.get('OFFSET', 0)
+        self.calc_Scalar = str2dec(kwargs.get('SCALAR', 1))
+        self.calc_Offset = str2dec(kwargs.get('OFFSET', 0))
         self.convert_calc_frames_cfg()                  #convert the read frames value to a usable format
 
     def convert_calc_frames_cfg(self):
@@ -71,6 +71,7 @@ class CANch():
             try: tmp_frames = list(literal_eval(self.calc_frames))  #convert to list
             except: tmp_frames = [literal_eval(self.calc_frames)]   #different conversion if only 1 value
             tmp_frames = [v-1 for v in tmp_frames]                  #decrement each item to conver to 0-based index
+        self.calc_frames = tmp_frames                               #set to converted result
     
     def dashCFG_checkErrs(self):
         """function checks the required class attributes to see if they are set and if the set value is
@@ -98,7 +99,7 @@ class CANch():
         tmpval = 0
         msb_indx = 0        #temp most-sig byte index for decimal conversion
         for frm_indx in self.calc_frames:                       #loop through the defined frames to calcualte
-            tmpval += self.val_rawCAN[frm_indx]*(256^msb_indx)  #convert the frame to decimal from LSB to MSB
+            tmpval += self.val_rawCAN[frm_indx]*(256**msb_indx)  #convert the frame to decimal from LSB to MSB
             msb_indx += 1   #increment index
         tmpval *= self.calc_Scalar  #scale raw decimal result
         tmpval += self.calc_Offset  #apply final offset
@@ -144,7 +145,7 @@ class CAN_core():
 
         #--data handling
         self.RX_filter = []         #iterable of dictionaries for the message RX filter
-        self.RX_allData = {}        #dictionary of all RX'd can data, in format {PID:[data,frames,rx,....,n=8]}
+        self.RX_allData = {152:[0,1,2,4,5,6]}        #dictionary of all RX'd can data, in format {PID:[data,frames,rx,....,n=8]}
         self.CAN_notifier = None    #instance of the CAN notifier for RX'd messages
 
     def set_cfg(self, **kwargs):
@@ -157,7 +158,8 @@ class CAN_core():
         """
         kwargs = {k.upper(): v for k, v in kwargs.items()}  #convert kwarg names to uppercase. Allows for use with XML and editor attributes
 
-        self.PID = kwargs.get('BASE_PID', sys_default_PID)
+        self.PID = kwargs.get('BASE_PID', sys_default_PID)  #get PID
+        self.PID = str2dec(self.PID, 16)                    #convert to dec
         self.RX_filter_en = kwargs.get('RX_FILTER', False)
     
     def CAN_add_channels(self, CANchs):
@@ -270,7 +272,7 @@ class CAN_core():
         :type RTR_start: bool - True to immediately start
         """
         for v in self.CANchs.values():  #cycle through defined channels
-            if v.RTR_en == True:
+            if v.RTR == True:
                 v.CANch_RTR_init()      #instance RTR schedule for channel
                 if RTR_start==True:     #if desired to immediately start
                     v.CANch_RTR_start() #start RTR
@@ -279,14 +281,14 @@ class CAN_core():
         """function starts all RTR periodic requests
         """
         for v in self.CANchs.values():  #cycle through defined channels
-            if v.RTR_en == True:
+            if v.RTR == True:
                 v.CANch_RTR_start()     #start RTR for channel
                 
     def CAN_RTR_ALLstop(self):
         """function stops all RTR periodic requests
         """
         for v in self.CANchs.values():  #cycle through defined channels
-            if v.RTR_en == True:
+            if v.RTR == True:
                 v.CANch_RTR_stop()      #stop RTR for channel
 
     def CAN_rx_data_update(self, PID, data_frames):
