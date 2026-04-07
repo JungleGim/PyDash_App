@@ -91,6 +91,8 @@ class CANch():
                 tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,attr+' undefined'))
             elif attr == 'RTR' and (self.RTR_freq == True) and ((val is None) or val == ''):
                 tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'RTR is en but no freq defined'))
+            elif attr == 'calc_Scalar' and (self.calc_Scalar == 0):
+                tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'Scalar is 0 - will not be a valid value'))
         return tmp_err_list #return error list
     
     def upd_calc_dec(self):

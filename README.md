@@ -72,6 +72,14 @@ The below is a list of wants/needs for future revisions; loosely listed in order
     - Update the OS to have a filesystem overlay for local files
     - Implement the "mass storage" gadget in the OS
 	- would no longer need the uSD approach
+* Improvement: Add uSD detect
+	- Need to incorporate the uSD detect pin into the app
+	- if the uSD det is open, then:
+		+ logging shouldn't be allowed to be enabled (log err message)
+		+ check for error condition on start/load
+		+ re-loading config from menu shouldn't be allowed
+* Improvement: Add option to re-load dash (or rather check for new config zip) in menu
+	- inserting the uSD card doesn't auto-trigger a dash config check/reload (and i don't want it to) but should add an option in the menu to check/reload so that it doesn't require a power-cycle to reload the dash config.
 
 ## Repository Directory Map
 The following information describes the folders found in the root directory of this repository
