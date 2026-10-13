@@ -60,12 +60,16 @@ The below is a list of wants/needs for future revisions; loosely listed in order
     - If a message is missed, the displayed value on the dash should indicate it somehow
         + Obvious issue with bar/bullet types, but still have the error tracking
         + Data values should go to a ERR
+* Feature Request:Logging to uSD
+		- Add ability to log the RX'd data to the uSD card
+		- user configurable log start button. Additionally have a CAN message to start logging (keypad button).
+		- "active logging" display icon
 * Improvement: Updated CAN frame definition
-    - Don't use "frames" anymore, change how CAN data is defined for use in the dash
-    - Update to "start bit", "number of bits", and "Endian"
-    - Endian will ensure the RX'd message is reconstructed correctly
-    - "start bit" and "number of bits" will help simplify things and allow like, single big status messages to be used
-    - Grayhill keypad and others use single bits so its worth updating
+    - Don't use the idea of "frames" anymore, change how CAN data is defined for use in the dash
+    - Update the definition to use a "start bit", "number of bits", and "Endian" parameters
+    - Endian will ensure the RX'd message is reconstructed correctly (direction)
+    - "start bit" and "number of bits" will help simplify things and allow single big status messages to be used. IE instead of saying "oh my data is on frame 3 of the message" it would be "my data starts at bit 33 and is 8 bits long".
+    - Grayhill keypad and others use single bits as status and on/off parameters so its worth updating
 * New Structure: Enable/update USB communication
     - Currently use uSD to house the config settings and local data logs
     - Add local on board flash to house temp files
