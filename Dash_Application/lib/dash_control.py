@@ -355,7 +355,7 @@ class dash_control:
         :param prnt_canv: parent canvas to make object on
         :type prnt_canv: `Tk.Canvas` class
         :param widg_kwargs: widget creation KWARGs - Will be converted here based on the named objects (for font, color, etc.)
-        :type widg_kwargs: Dict {kwarg_name \: value}
+        :type widg_kwargs: Dict {kwarg_name : value}
         :returns: tuple of reference ID of the created object, and pad reference
         :rtype: `tk.canvas` reference
         """

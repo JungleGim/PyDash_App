@@ -147,7 +147,7 @@ class CAN_core():
 
         #--data handling
         self.RX_filter = []         #iterable of dictionaries for the message RX filter
-        self.RX_allData = {152:[0,1,2,4,5,6]}        #dictionary of all RX'd can data, in format {PID:[data,frames,rx,....,n=8]}
+        self.RX_allData = {152:[0,1,2,3,4,5,6,7]}   #dictionary of all RX'd can data, in format {PID:[data,frames,rx,....,n=8]}
         self.CAN_notifier = None    #instance of the CAN notifier for RX'd messages
 
     def set_cfg(self, **kwargs):
@@ -250,7 +250,7 @@ class CAN_core():
             tmp_mask = None                                             #temp mask var
             if v.ext_PID == True: tmp_mask = sys_EFF_mask               #if it's an extended PID, use EFF mask
             else: tmp_mask = sys_SFF_mask                               #otherwise use standard (SFF) mask
-            self.RX_filter.append([{v.PID, tmp_mask, v.ext_PID}])       #then append filter to list
+            self.RX_filter.append([{'can_id':v.PID, 'can_mask':tmp_mask, 'extended':v.ext_PID}])       #then append filter to list
         
         if rxfilter_en == True: self.CAN_RXfilter_on()      #if the filter enable is set, then also start after generating
     
