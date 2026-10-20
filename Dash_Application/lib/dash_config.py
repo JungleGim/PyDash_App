@@ -172,7 +172,7 @@ def parseXML_CAN(master_ref, block):
         read_CAN_ch = {}                                                #temp CANch array for read values
 
         for ch in chs.findall('CH'):                                    #cycle through all defined channels
-            read_CAN_data.update({'NAME' : ch.attrib.get('NAME')})      #append CANch Name to temp dict
+            read_CAN_data = {'NAME' : ch.attrib.get('NAME')}            #fresh CANch property dict for each channel
             for ch_props in ch:
                 read_CAN_data.update({ch_props.tag : ch_props.text})    #append CANch props to temp dict
             tmp_ch = CANch(tmp_CAN.CANbus)                              #create temp CAN channel

@@ -71,6 +71,9 @@ class wndw_Main(tk.Tk):
         functionality, primarily is used in menu windows. Dash pages should function based on event triggers
         and not need this processing."""
 
+        if hasattr(self, 'dash_CAN') and self.dash_CAN is not None:
+            self.dash_CAN.check_timeouts()
+
         if callable(getattr(self.dash_ctl.active_page_ref, 'upd_page',None)):   #if current page has an update routine
             self.dash_ctl.active_page_ref.upd_page()                            #then call it
 
@@ -80,12 +83,17 @@ class wndw_Main(tk.Tk):
         """function updates the global error tracking dict with the passed values"""
         for e in err_msgs:
             self.errors.append(e)
+
+    def log_channel_error(self, err_msg):
+        """function updates the global errors list, replacing any prior error with same sys & mod
+        to ensure only the latest occurrence is logged."""
+        self.errors = [e for e in self.errors if not (getattr(e, 'sys', None) == err_msg.sys and getattr(e, 'mod', None) == err_msg.mod)]
+        self.errors.append(err_msg)
     
     def clear_errs(self):
-        """function clears any 'clearable' errors in the error tracking dict. Note that any
+        """function clears any 'clearable' errors in the error tracking list. Note that any
         critical system-level errors are non-clearable"""
-        for k, v in self.errors.items():            #loop through all errors
-            if v.clr == True: self.errors.pop(k)    #if its clearable, then remove from dict
+        self.errors = [e for e in self.errors if not getattr(e, 'clr', False)]
 
 #-----------------------------main loop
 if __name__ == "__main__":

@@ -87,9 +87,10 @@ def str2bool(val):
     :rtype: `boolean`
     """
     rval = False
-    if type(val) == bool: rval = val            #value is already in bool format, no need to convert
-    elif val.lower() == 'true': rval = True     #convert to true
-    elif val.lower() == 'false': rval = False   #convert to false
+    if val is None or val == '': rval = False
+    elif type(val) == bool: rval = val            #value is already in bool format, no need to convert
+    elif hasattr(val, 'lower') and val.lower() == 'true': rval = True     #convert to true
+    elif hasattr(val, 'lower') and val.lower() == 'false': rval = False   #convert to false
     
     return rval                                 #default return false if unknown
 
@@ -805,9 +806,9 @@ class Label_Data:
 
         return tmp_err_list
     
-    def update_state(self, var, indx, mode):
+    def update_state(self, var=None, indx=None, mode=None):
         """function updates the state of the dash element. Typically called when
-        new CAN data that controls the widget is received
+        new CAN data that controls the widget is received or on channel timeout
         
         :param var_name: (not used) - variable trace related value
         :param indx: (not used) - variable trace related value
@@ -816,31 +817,38 @@ class Label_Data:
         thm_clrs = thm_ref.colors                       #local ref for theme colors
         cntrl_ref = self.master_ref.dash_ctl            #local ref for dash control
         upd_kwargs = {}                                 #temp dict of kwargs to edit/update the displayed widget
-        
-        new_val = self.CAN_dec_ref.get()                #get current data value
-        new_txt = dec2str(new_val, self.sigdig)         #and convert to string
-        upd_kwargs.update({'text': new_txt})            #and update text value
 
-        if self.warn_en == True:    #if warnings are enabled, check to see if threshold crossed
-            color_attr = get_alert_color(new_val, self.lim_DngrLo, self.lim_WarnLo, self.lim_WarnHi, self.lim_DngrHi)       #get the current warning attribute
-            if color_attr is not None:                  #if alert limit is crossed, set BG and fill colors
-                fill_clr_name = thm_ref.alert_FG
-                bg_clr_name = getattr(thm_ref,color_attr)
-            else:                   #otherwise reset to default
-                fill_clr_name = self.fill
-                bg_clr_name = self.clr_bg
-        else:                       #if no warning enabled, then use default
+        is_err = getattr(self, "CAN_ch_ref", None) is not None and getattr(self.CAN_ch_ref, "err", False)
+
+        if is_err:
+            upd_kwargs.update({"text": "ERR"})
             fill_clr_name = self.fill
             bg_clr_name = self.clr_bg
+        else:
+            new_val = self.CAN_dec_ref.get()                #get current data value
+            new_txt = dec2str(new_val, self.sigdig)         #and convert to string
+            upd_kwargs.update({"text": new_txt})            #and update text value
+
+            if self.warn_en == True:    #if warnings are enabled, check to see if threshold crossed
+                color_attr = get_alert_color(new_val, self.lim_DngrLo, self.lim_WarnLo, self.lim_WarnHi, self.lim_DngrHi)       #get the current warning attribute
+                if color_attr is not None:                  #if alert limit is crossed, set BG and fill colors
+                    fill_clr_name = thm_ref.alert_FG
+                    bg_clr_name = getattr(thm_ref,color_attr)
+                else:                   #otherwise reset to default
+                    fill_clr_name = self.fill
+                    bg_clr_name = self.clr_bg
+            else:                       #if no warning enabled, then use default
+                fill_clr_name = self.fill
+                bg_clr_name = self.clr_bg
         
         fill_clr = thm_clrs[fill_clr_name]          #get appropriate color hex codes
         bg_clr = thm_clrs[bg_clr_name]
-        upd_kwargs.update({'fill': fill_clr})       #add fill color to text update kwargs
+        upd_kwargs.update({"fill": fill_clr})       #add fill color to text update kwargs
 
-        self.canv_ref.itemconfigure(self.objID, upd_kwargs)             #update canvas object props
-        if self.pad == True:                                            #if padded
-            cntrl_ref.elePad_update(self.canv_ref, self.objID, self.padID, {'fill':bg_clr})     #update pad object
-        
+        if self.canv_ref is not None and self.objID is not None:
+            self.canv_ref.itemconfigure(self.objID, upd_kwargs)             #update canvas object props
+            if self.pad == True and self.padID is not None:                 #if padded
+                cntrl_ref.elePad_update(self.canv_ref, self.objID, self.padID, {"fill":bg_clr})     #update pad object
 class Indicator_Bullet:
     def __init__(self):
         '''Configuration class for bullet indicator types'''
@@ -957,9 +965,9 @@ class Indicator_Bullet:
 
         return tmp_err_list
     
-    def update_state(self, var, indx, mode):
+    def update_state(self, var=None, indx=None, mode=None):
         """function updates the state of the dash element. Typically called when
-        new CAN data that controls the widget is received
+        new CAN data that controls the widget is received or on channel timeout
         
         :param var_name: (not used) - variable trace related value
         :param indx: (not used) - variable trace related value
@@ -967,16 +975,22 @@ class Indicator_Bullet:
         thm_ref = self.master_ref.dash_theme            #local ref for dash theme
         thm_clrs = thm_ref.colors                       #local ref for theme colors
         upd_kwargs = {}                                 #temp dict of kwargs to edit/update the displayed widget
-        
-        new_val = self.CAN_dec_ref.get()                #get current data value
-        
-        #--check fill state
-        if new_val > self.lim_hi:                       #if above the "high" limit
-            upd_kwargs.update({'fill': thm_clrs[self.clr_hi]})  #update fill color
-        elif new_val < self.lim_lo:                     #or below the "low" limit
-            upd_kwargs.update({'fill': thm_clrs[self.clr_lo]})  #update fill color
 
-        self.canv_ref.itemconfigure(self.objID, upd_kwargs)     #update canvas object props
+        is_err = getattr(self, "CAN_ch_ref", None) is not None and getattr(self.CAN_ch_ref, "err", False)
+
+        if is_err:
+            upd_kwargs.update({"fill": thm_clrs[self.clr_lo]})  #default to off state
+        else:
+            new_val = self.CAN_dec_ref.get()                #get current data value
+            
+            #--check fill state
+            if new_val > self.lim_hi:                       #if above the "high" limit
+                upd_kwargs.update({"fill": thm_clrs[self.clr_hi]})  #update fill color
+            elif new_val < self.lim_lo:                     #or below the "low" limit
+                upd_kwargs.update({"fill": thm_clrs[self.clr_lo]})  #update fill color
+
+        if self.canv_ref is not None and self.objID is not None:
+            self.canv_ref.itemconfigure(self.objID, upd_kwargs)     #update canvas object props
 
 class Indicator_Bar:
     def __init__(self):
@@ -1110,9 +1124,9 @@ class Indicator_Bar:
 
         return tmp_err_list
     
-    def update_state(self, var, indx, mode):
+    def update_state(self, var=None, indx=None, mode=None):
         """function updates the state of the dash element. Typically called when
-        new CAN data that controls the widget is received
+        new CAN data that controls the widget is received or on channel timeout
         
         :param var_name: (not used) - variable trace related value
         :param indx: (not used) - variable trace related value
@@ -1120,22 +1134,35 @@ class Indicator_Bar:
         thm_ref = self.master_ref.dash_theme            #local ref for dash theme
         thm_clrs = thm_ref.colors                       #local ref for theme colors
         upd_kwargs = {}                                 #temp dict of kwargs to edit/update the displayed widget
-        
-        new_val = self.CAN_dec_ref.get()                #get current data value
 
-        #--calculate new y1 val
-        new_x1 = self.x0 + (new_val-self.scale_lo)/(self.scale_hi-self.scale_lo)*self.width
-        self.canv_ref.coords(self.objID, self.x0, self.y0, new_x1, self.y1)     #update rectangle size
+        is_err = getattr(self, "CAN_ch_ref", None) is not None and getattr(self.CAN_ch_ref, "err", False)
 
-        #--check warning limits
-        if self.warn_en == True:
-            color_attr = get_alert_color(new_val, self.lim_DngrLo, self.lim_WarnLo, self.lim_WarnHi, self.lim_DngrHi)       #get the current warning attribute
-            if color_attr is not None:                  #if alert limit set, set BG and fill colors
-                ele_color_name = getattr(thm_ref,color_attr)
-            else:                                       #otherwise, use default config values
-                ele_color_name = self.fill
-            ele_color = thm_clrs[ele_color_name]        #get hex code from theme for color
-            upd_kwargs.update({'outline': ele_color,
-                               'fill':ele_color})       #add fill and outline to color update       
+        if is_err:
+            new_val = self.scale_lo if self.scale_lo is not None else 0  #default to zero state
+        else:
+            new_val = self.CAN_dec_ref.get()                #get current data value
 
-        self.canv_ref.itemconfigure(self.objID, upd_kwargs)     #update canvas object props
+        #--calculate new x1 val
+        if self.scale_hi is not None and self.scale_lo is not None and (self.scale_hi != self.scale_lo) and self.width is not None and self.x0 is not None:
+            new_x1 = self.x0 + (new_val-self.scale_lo)/(self.scale_hi-self.scale_lo)*self.width
+        else:
+            new_x1 = self.x0
+
+        if self.canv_ref is not None and self.objID is not None:
+            self.canv_ref.coords(self.objID, self.x0, self.y0, new_x1, self.y1)     #update rectangle size
+
+            #--check warning limits
+            if not is_err and self.warn_en == True:
+                color_attr = get_alert_color(new_val, self.lim_DngrLo, self.lim_WarnLo, self.lim_WarnHi, self.lim_DngrHi)       #get the current warning attribute
+                if color_attr is not None:                  #if alert limit set, set BG and fill colors
+                    ele_color_name = getattr(thm_ref,color_attr)
+                else:                                       #otherwise, use default config values
+                    ele_color_name = self.fill
+                ele_color = thm_clrs[ele_color_name]        #get hex code from theme for color
+                upd_kwargs.update({"outline": ele_color,
+                                   "fill":ele_color})       #add fill and outline to color update
+            elif self.fill is not None:
+                ele_color = thm_clrs[self.fill]
+                upd_kwargs.update({"outline": ele_color, "fill": ele_color})
+
+            self.canv_ref.itemconfigure(self.objID, upd_kwargs)     #update canvas object props

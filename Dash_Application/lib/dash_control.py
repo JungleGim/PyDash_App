@@ -225,8 +225,16 @@ class dash_control:
         :type ele_cfg: any of the dash data element classes like `Label_Data` or `Indicator_Bullet`
         """
         tmp_CANch = self.master_ref.dash_CAN.CANchs                     #shorthand local ref for CAN channels
-        ele_cfg.CAN_dec_ref = tmp_CANch[ele_cfg.data_ch].val_dec        #assign ref to CAN channel
+        ch = tmp_CANch[ele_cfg.data_ch]
+        ele_cfg.CAN_ch_ref = ch                                         #assign ref to CAN channel instance
+        ele_cfg.CAN_dec_ref = ch.val_dec                                #assign ref to CAN channel DoubleVar
+        if hasattr(ch, 'linked_elements') and ele_cfg not in ch.linked_elements:
+            ch.linked_elements.append(ele_cfg)                          #register element with CAN channel
         ele_cfg.CAN_dec_ref.trace_add('write', ele_cfg.update_state)    #add trace to update page element
+        try:
+            ele_cfg.update_state()                                      #set initial display state
+        except Exception:
+            pass
 
     def dash_buildPages(self):
         """Function builds the various pages in the configuration and udpates the main dash pages dict
