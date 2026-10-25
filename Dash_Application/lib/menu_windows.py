@@ -189,10 +189,10 @@ class page_menu_CANsniffer(menu_page_template):
         """Note: local copy is needed because if during the for loop if a new value is added and the dict
         size changes, it causes a runtime error."""
         local_allDat = dict(self.master_ref.dash_CAN.RX_allData)    #make local copy
-        for pid, dat_frm in local_allDat.items():                   #loop through raw CAN data
-            #format should be: 0xPID - [MSB]...[LSB]
-            pid_str = f"0x{pid:03X}"                                                    #format the PID value
-            dat_str = '0x[{}]'.format(', '.join(f"{val:02X}" for val in dat_frm[::-1])) #format data string
+        for aid, dat_frm in local_allDat.items():                   #loop through raw CAN data
+            #format should be: 0xAID - [0]...[7]
+            pid_str = f"0x{aid:03X}"                                                #format the AID value
+            dat_str = '0x[{}]'.format(', '.join(f"{val:02X}" for val in dat_frm))   #format data string
             string = pid_str + ' - ' + dat_str                      #make the display string
             self.data_listbox.insert(tk.END, string)                #insert display string
         

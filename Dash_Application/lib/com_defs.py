@@ -282,7 +282,7 @@ class dash_page_user(page_template):
     def set_cfg(self, **kwargs):
         """ function sets class attributes based on the passed KWARGs.
         All KWARGs have default values non-required core fields. IE, RTR
-        has a default field, but PID does not.
+        has a default field, but AID does not.
 
         :param kwargs: dict of class inputs
         :type kwargs: any type that can be typecast to string

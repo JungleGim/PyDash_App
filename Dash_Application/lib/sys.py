@@ -69,10 +69,14 @@ sys_btn_bouncetime = 200            #button debounce time in ms
 sys_HW_chnl = 'can0'
 sys_CAN_baud = '500000'
 sys_CAN_intrfce = 'socketcan'
-sys_default_PID = 0xA0              #default self PID for the dash
+sys_default_AID = 0xA0              #default self arbitration ID for the dash
 sys_SFF_mask = 0x7FF                #message filter mask - compare all bits - standard frame format (SFF)
 sys_EFF_mask = 0x1FFFFFFF           #message filter mask - compare all bits - extended frame format (EFF)
 sys_RTR_freq_dflt = 5               #default RTR frequency in seconds - also used for channel timeouts (why it is very long)
+sys_OBD2_msgIndx_DLC = 0            #OBD2 message index - data length
+sys_OBD2_msgIndx_MD = 1             #OBD2 message index - mode
+sys_OBD2_msgIndx_PID = 2            #OBD2 message index - PID
+sys_OBD2_msgIndx_datMSB = 3         #OBD2 message index - most sig byte
 
 #----misc constants
 sys_pad_margin = 2                  #padding margin of the BG pad object, in pixels, larger than its parent

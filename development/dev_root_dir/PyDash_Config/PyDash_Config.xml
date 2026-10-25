@@ -37,12 +37,14 @@
   </THEME>
   <CAN>
     <CORE>
-      <BASE_PID>0x9A</BASE_PID>
+      <BASE_AID>0x9A</BASE_AID>
       <RX_FILTER>False</RX_FILTER>
+			<OBD2_ECU_IDTX>0x7DF</OBD2_ECU_IDTX>
+			<OBD2_ECU_IDRX>0x7E8</OBD2_ECU_IDRX>
     </CORE>
     <CHANNELS>
       <CH NAME="RPM">
-        <PID>0x63</PID>
+        <AID>0x63</AID>
         <EXT>False</EXT>
         <DLC>2</DLC>
         <REM_REQ>False</REM_REQ>
@@ -52,7 +54,7 @@
         <OFFSET>0</OFFSET>
       </CH>
       <CH NAME="ECT">
-        <PID>0x43</PID>
+        <AID>0x43</AID>
         <EXT>False</EXT>
         <DLC>2</DLC>
         <REM_REQ>False</REM_REQ>
@@ -62,7 +64,7 @@
         <OFFSET>-65</OFFSET>
       </CH>
       <CH NAME="WBO2">
-        <PID>0x73</PID>
+        <AID>0x73</AID>
         <EXT>False</EXT>
         <DLC>2</DLC>
         <REM_REQ>False</REM_REQ>
@@ -72,7 +74,7 @@
         <OFFSET>0</OFFSET>
       </CH>
       <CH NAME="OILP">
-        <PID>0x44</PID>
+        <AID>0x44</AID>
         <EXT>False</EXT>
         <DLC>2</DLC>
         <REM_REQ>False</REM_REQ>
@@ -82,7 +84,7 @@
         <OFFSET>0</OFFSET>
       </CH>
       <CH NAME="MAP">
-        <PID>0x45</PID>
+        <AID>0x45</AID>
         <EXT>False</EXT>
         <DLC>2</DLC>
         <REM_REQ>False</REM_REQ>
@@ -92,7 +94,7 @@
         <OFFSET>0</OFFSET>
       </CH>
       <CH NAME="LOBM">
-        <PID>0x2B</PID>
+        <AID>0x2B</AID>
         <EXT>False</EXT>
         <DLC>1</DLC>
         <REM_REQ>False</REM_REQ>
@@ -102,7 +104,7 @@
         <OFFSET>0</OFFSET>
       </CH>
       <CH NAME="HIBM">
-        <PID>0x27</PID>
+        <AID>0x27</AID>
         <EXT>False</EXT>
         <DLC>1</DLC>
         <REM_REQ>False</REM_REQ>
