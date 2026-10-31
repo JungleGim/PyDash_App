@@ -22,6 +22,16 @@ Build Date: N/A
         + added OBD2 yes/no and PID fields to CANch
 
 * Need to test a config file using thge new OBD2 data channel information
+* Update config check with new userspace
+    - Local RW userspace added in OS
+    - App should get uSD for new config zip, if present then write to userspace
+    - otherwise config in userspace is what's read at startup
+* Add feature request for logging
+    - any can channels with logging set will save to file in userspace
+    - button press starts logging and displays icon on screen
+    - logging is saved to userspace. Be sure to use an open/save/update method for the file to help mitigate corruptions on power loss
+    - When logging is ended, checks if file is in the uSD. If it is not, then it should move to uSD and delete local userspace file
+    - Also on startup check for any files in userspace not on uSD. If there are, then move and delete (maybe logged without uSD)
 
 # Development Finishing
 Things that were changed as a "debug mode" for development that should be reverted for final release
