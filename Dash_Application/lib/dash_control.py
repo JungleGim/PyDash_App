@@ -18,20 +18,20 @@ class dash_control:
 
         #REMINDER: list is 0-indexed but physical buttons are 1's index
         #---default user menu page button actions
-        self.dflt_user_pg_btns = [None,
+        self.dflt_user_pg_btns = [self.goto_user_PrevPage,
                                   self.goto_menu_FirstPage,
+                                  self.goto_user_NextPage,
                                   None,
-                                  self.goto_user_PrevPage,
                                   None,
-                                  self.goto_user_NextPage]
+                                  None]
         
         #---default menu page button actions
-        self.dflt_menu_pg_btns = [None,
+        self.dflt_menu_pg_btns = [self.goto_menu_PrevPage,
                                   self.goto_menu_BackPage,
+                                  self.goto_menu_NextPage,
                                   None,
-                                  self.goto_menu_PrevPage,
                                   None,
-                                  self.goto_menu_NextPage]
+                                  None]
 
     def get_page_indx_user(self, pg_name):
         """function gets the order index of the passed page name

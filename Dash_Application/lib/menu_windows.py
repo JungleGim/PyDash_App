@@ -59,25 +59,27 @@ class menu_page_template(tk.Frame):
         self.alt_frm.grid_rowconfigure(0, weight=1)                         #fill complete height
 
         #--left button frame for alignment/justification of button labels
-        self.lt_btn_frm = tk.Frame(self.alt_frm,bg=self.frm_bg_clr, borderwidth=0,highlightthickness=0)  #left buttons frame
+        self.lt_btn_frm = tk.Frame(self.alt_frm,bg=self.frm_bg_clr, borderwidth=0,highlightthickness=0, width=100)
         self.lt_btn_frm.grid(row=0, column=0, padx=10, pady=(0,50), sticky=tk.NS)
-        self.lt_btn_frm.grid_rowconfigure(0, weight=1)                                                   #fill complete height
+        self.lt_btn_frm.grid_rowconfigure(0, weight=1)  #fill complete height
+        self.lt_btn_frm.grid_propagate(False)           #fix size
 
         #--right button frame for alignment/justification of button labels
-        self.rt_btn_frm = tk.Frame(self.alt_frm,bg=self.frm_bg_clr, borderwidth=0,highlightthickness=0)  #right buttons frame
+        self.rt_btn_frm = tk.Frame(self.alt_frm,bg=self.frm_bg_clr, borderwidth=0,highlightthickness=0, width=100)
         self.rt_btn_frm.grid(row=0, column=2, padx=10, pady=(0,50), sticky=tk.NS)
-        self.rt_btn_frm.grid_rowconfigure(0, weight=1)                                                   #fill complete height
+        self.rt_btn_frm.grid_rowconfigure(0, weight=1)  #fill complete height
+        self.rt_btn_frm.grid_propagate(False)           #fix size
 
         #--default navigation buttons
+        btn1_lbl = tk.Label(self.lt_btn_frm, text='Prv Pg', font=menuTheme_font_tiny,
+                            fg=menuTheme_color_TextFG, bg=self.frm_bg_clr, justify=tk.RIGHT)
+        btn1_lbl.grid(row=0, column=0, sticky=tk.NE)
         btn2_lbl = tk.Label(self.lt_btn_frm, text='Exit', font=menuTheme_font_tiny,
                             fg=menuTheme_color_TextFG, bg=self.frm_bg_clr, justify=tk.LEFT)
-        btn2_lbl.grid(row=0, column=0, sticky=tk.W)
-        btn4_lbl = tk.Label(self.rt_btn_frm, text='Prv Pg', font=menuTheme_font_tiny,
+        btn2_lbl.grid(row=0, column=0, sticky=tk.E)
+        btn2_lbl = tk.Label(self.lt_btn_frm, text='Nxt Pg', font=menuTheme_font_tiny,
                             fg=menuTheme_color_TextFG, bg=self.frm_bg_clr, justify=tk.RIGHT)
-        btn4_lbl.grid(row=0, column=0, sticky=tk.NE)
-        btn6_lbl = tk.Label(self.rt_btn_frm, text='Nxt Pg', font=menuTheme_font_tiny,
-                            fg=menuTheme_color_TextFG, bg=self.frm_bg_clr, justify=tk.RIGHT)
-        btn6_lbl.grid(row=0, column=0, sticky=tk.SE)   
+        btn2_lbl.grid(row=0, column=0, sticky=tk.SE)   
 
 class page_menu_settingsMain(menu_page_template):
     def __init__(self, master_ref):
@@ -105,15 +107,16 @@ class page_menu_settingsMain(menu_page_template):
         self.data_listbox.grid(row=0, column=1, sticky=tk.NSEW)
 
         #--button labels
-        #btn1_lbl=N/A
+        #btn1 = default previous page
         #btn2 = default exit menu
-        #btn3_lbl=N/A
-        #btn4 = default previous page
-        #btn5_lbl=N/A
-        #btn6 = default next page
+        #btn3 = default next page
+        #btn4 = N/A
+        #btn5 = N/A
+        #btn6 = N/A
     
     def assign_btn_calls(self):
         """function assigns any page-specific button calls/functions"""
+        pass #no page specific calls
 
     def upd_page(self):
         """function updates the current page with any changed values"""
@@ -150,19 +153,19 @@ class page_menu_CANsniffer(menu_page_template):
         self.data_listbox.grid(row=0, column=1, sticky=tk.NSEW)
 
         #--button labels
-        btn1_lbl = tk.Label(self.lt_btn_frm, text='Reset', font=menuTheme_font_tiny,
-                            fg=menuTheme_color_TextFG, bg=self.frm_bg_clr, justify=tk.LEFT)
-        btn1_lbl.grid(row=0, column=0, sticky=tk.NW)
+        #btn1 = default previous page
         #btn2 = default exit menu
-
-        self.var_filtr_btn_txt = tk.StringVar(value='RX Fltr\n')
-        btn3_lbl = tk.Label(self.lt_btn_frm, textvariable=self.var_filtr_btn_txt, font=menuTheme_font_tiny,
+        #btn3 = default next page
+        #btn4 = reset CAN data
+        btn4_lbl = tk.Label(self.rt_btn_frm, text='Reset', font=menuTheme_font_tiny,
                             fg=menuTheme_color_TextFG, bg=self.frm_bg_clr, justify=tk.LEFT)
-        btn3_lbl.grid(row=0, column=0, sticky=tk.SW)      
-
-        #btn4 = default previous page
-        #btn5_lbl=N/A
-        #btn6 = default next page
+        btn4_lbl.grid(row=0, column=0, sticky=tk.NW)
+        #btn5 = N/A
+        #btn6 = enable/disable filter
+        self.var_filtr_btn_txt = tk.StringVar(value='RX Fltr\n')
+        btn6_lbl = tk.Label(self.rt_btn_frm, textvariable=self.var_filtr_btn_txt, font=menuTheme_font_tiny,
+                            fg=menuTheme_color_TextFG, bg=self.frm_bg_clr, justify=tk.LEFT)
+        btn6_lbl.grid(row=0, column=0, sticky=tk.SW)      
 
         #--set initial state of the filter variable
         if self.master_ref.dash_CAN.RX_filter_en == True: self.var_filtr_btn_txt.set('RX Fltr\nOn')
@@ -170,8 +173,8 @@ class page_menu_CANsniffer(menu_page_template):
     
     def assign_btn_calls(self):
         """function assigns any page-specific button calls/functions"""
-        self.btn_func[0] = self.master_ref.dash_CAN.CAN_rx_data_clear   #assign the clear CANrx dict call
-        self.btn_func[2] = self.toggle_CANrx_filter                     #assign the toggle filter call
+        self.btn_func[3] = self.master_ref.dash_CAN.CAN_rx_data_clear   #assign the clear CANrx dict call
+        self.btn_func[5] = self.toggle_CANrx_filter                     #assign the toggle filter call
 
     def toggle_CANrx_filter(self):
         """function toggles the CANrx filter state. WARNING: this persists outside of settings menu"""
@@ -223,18 +226,19 @@ class page_menu_errorsMain(menu_page_template):
         self.data_listbox.grid(row=0, column=1, sticky=tk.NSEW)
 
         #--button labels
-        btn1_lbl = tk.Label(self.lt_btn_frm, text='Clear', font=menuTheme_font_tiny,
-                            fg=menuTheme_color_TextFG, bg=self.frm_bg_clr, justify=tk.LEFT)
-        btn1_lbl.grid(row=0, column=0, sticky=tk.NW)
+        #btn1 = default previous page
         #btn2 = default exit menu
-        #btn3_lbl=N/A
-        #btn4 = default previous page
-        #btn5_lbl=N/A
-        #btn6 = default next page
+        #btn3 = default next page
+        #btn4 = clear errors
+        btn4_lbl = tk.Label(self.rt_btn_frm, text='Clear', font=menuTheme_font_tiny,
+                            fg=menuTheme_color_TextFG, bg=self.frm_bg_clr, justify=tk.LEFT)
+        btn4_lbl.grid(row=0, column=0, sticky=tk.NW)
+        #btn5 = N/A
+        #btn6 = N/A
     
     def assign_btn_calls(self):
         """function assigns any page-specific button calls/functions"""
-        self.btn_func[0] = self.master_ref.clear_errs           #assign the clear errors function call
+        self.btn_func[3] = self.master_ref.clear_errs           #assign the clear errors function call
 
     def upd_page(self):
         """function updates the current page with any changed values"""
