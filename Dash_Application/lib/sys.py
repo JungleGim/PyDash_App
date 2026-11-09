@@ -73,10 +73,13 @@ sys_default_AID = 0xA0              #default self arbitration ID for the dash
 sys_SFF_mask = 0x7FF                #message filter mask - compare all bits - standard frame format (SFF)
 sys_EFF_mask = 0x1FFFFFFF           #message filter mask - compare all bits - extended frame format (EFF)
 sys_RTR_freq_dflt = 5               #default RTR frequency in seconds - also used for channel timeouts (why it is very long)
-sys_OBD2_msgIndx_DLC = 0            #OBD2 message index - data length
-sys_OBD2_msgIndx_MD = 1             #OBD2 message index - mode
+
+sys_OBD2_tx_GenBroad = 0x7DF        #OBD2 general boardcast PID
+sys_OBD2_rx_EcuOffset = 0x08        #OBD2 CAN address offset for data RX'd from an RTR
+sys_OBD2_mode_current = 0x01        #OBD2 request mode - current data
+sys_OBD2_TPLEN_single = 0x02        #ISO-TP length for a single PID request
+
 sys_OBD2_msgIndx_PID = 2            #OBD2 message index - PID
-sys_OBD2_msgIndx_datMSB = 3         #OBD2 message index - most sig byte
 
 #----misc constants
 sys_pad_margin = 2                  #padding margin of the BG pad object, in pixels, larger than its parent

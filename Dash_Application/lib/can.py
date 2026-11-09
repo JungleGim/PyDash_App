@@ -3,7 +3,7 @@ File:       can.py
 Function:   This file contains any CAN bus specific classes and methods
 """
 from .sys import *
-from .com_defs import create_err_msg, str2dec
+from .com_defs import create_err_msg, str2dec, str2bool
 from .com_defs import err_message
 
 class CANch():
@@ -30,11 +30,10 @@ class CANch():
         #--OBD2 specific channel information
         self.OBD2 = False               #data channel is an OBD2 format channel
         self.OBD2_PID = None            #PID being requested
-        self.OBD2_bytes = None          #number of bytes PID will send
-        #--non-OBD2 values and conversion information
-        self.calc_frames = []           #the frames in the RX'd word to use when calulating the value
 
         #decimal conversion information
+        self.startBit = None            #start bit of the data to convert
+        self.stopBit = None             #stop bit of the data to convert
         self.calc_Scalar = None         #the final value scalar when converting frames to decimal
         self.calc_Offset = None         #the decimal offset of the caluclated value
 
@@ -59,31 +58,20 @@ class CANch():
         kwargs = {k.upper(): v for k, v in kwargs.items()}  #convert kwarg names to uppercase. Allows for use with XML and editor attributes
         self.Name = kwargs.get('NAME', None)
         self.AID = str2dec(kwargs.get('AID', None),16)
-        self.ext_AID = kwargs.get('EXT', False)
+        self.ext_AID = str2bool(kwargs.get('EXT', False))
         self.DLC = str2dec(kwargs.get('DLC', 1))
-        self.RTR = kwargs.get('REM_REQ', False)
+        self.RTR = str2bool(kwargs.get('REM_REQ', False))
         if self.RTR == True:                            #if RTR enabled
-            self.RTR_freq = kwargs.get('REQ_FREQ', sys_RTR_freq_dflt)    #get RTR frequency
+            self.RTR_freq = str2dec(kwargs.get('REQ_FREQ', sys_RTR_freq_dflt))    #get RTR frequency
         else: self.RTR_freq = None                      #if not enabled then set to none
        
-        self.OBD2 = kwargs.get('OBD2', False)
+        self.OBD2 = str2bool(kwargs.get('OBD2', False))
         self.OBD2_PID = str2dec(kwargs.get('OBD2_PID', None),16)
-        self.OBD2_bytes = str2dec(kwargs.get('OBD2_BYTES', None),16)
-        
-        self.calc_frames = kwargs.get('FRAMES', [1])
+
+        self.startBit = str2dec(kwargs.get('START_BIT', None),16)
+        self.stopBit = str2dec(kwargs.get('STOP_BIT', None),16)
         self.calc_Scalar = str2dec(kwargs.get('SCALAR', 1))
         self.calc_Offset = str2dec(kwargs.get('OFFSET', 0))
-        self.convert_calc_frames_cfg()                  #convert the read frames value to a usable format
-
-    def convert_calc_frames_cfg(self):
-        """function converts from the user-friendly config value that is a string of 1
-        index frames to the actual 0 index list that is useful for processing a CAN message"""
-        tmp_frames = None   #temp var for frame processing
-        if self.calc_frames is not None:
-            try: tmp_frames = list(literal_eval(self.calc_frames))  #convert to list
-            except: tmp_frames = [literal_eval(self.calc_frames)]   #different conversion if only 1 value
-            tmp_frames = [v-1 for v in tmp_frames]                  #decrement each item to conver to 0-based index
-        self.calc_frames = tmp_frames                               #set to converted result
     
     def dashCFG_checkErrs(self):
         """function checks the required class attributes to see if they are set and if the set value is
@@ -96,61 +84,66 @@ class CANch():
         :rtype: `dictionary` {attribute_name:"error message"}
         """
         tmp_err_list = []   #temp list for compiling errors
-        OBD2_chk = self.OBD2
+
+        #--Common value checks
         for attr, val in self.__dict__.items():
             if attr == 'CANbus_ref' or attr =='last_RX' or attr =='RTR_task':
                 continue    #skip, these are not config values
-            if OBD2_chk is False:       #normal CAN channel checks
-                if attr == 'OBD2' or attr =='OBD2_PID' or attr =='OBD2_bytes':
-                    continue    #skip, these are OBD2 specific config values
-                if (attr != 'RTR') and (attr != 'RTR_freq') and ((val is None) or val == ''):
+            elif (attr == 'AID' or attr == 'startBit' or attr == 'stopBit') and ((val is None) or val == ''):
+                tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,attr+' undefined'))
+            elif (attr == 'calc_Scalar' or attr == 'calc_Offset') and ((val is None) or val == ''):
                     tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,attr+' undefined'))
-                elif attr == 'RTR' and (self.RTR_freq == True) and ((val is None) or val == ''):
-                    tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'RTR is en but no freq defined'))
-                elif attr == 'calc_Scalar' and (self.calc_Scalar == 0):
-                    tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'Scalar is 0 - will not be a valid value'))
-            elif OBD2_chk is True:      #OBD2 specific config checks
-                #TODO: if non-OBD2 attribute, continue
-                if attr == 'AID' or attr =='calc_frames':
-                    continue    #skip, these are nonOBD2 specific config values
-                if self.ext_AID == True:
-                    tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'Extended frame cannot be TRUE for OBD2'))
-                if self.DLC != 8:
-                    tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'DLC for OBD2 must be 8'))
-                if self.OBD2_bytes == '' or self.OBD2_bytes is None or self.OBD2_bytes < 1:
-                    tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'OBD2 number of bytes is invalid'))
+
+        #--RTR parameter Checks
+        if self.RTR == True and (self.RTR_freq is None or self.RTR_freq == ''):
+            tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'RTR is en but no freq defined'))
+
+        #--start/stop bit checks
+        if self.stopBit < self.startBit:
+            tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'Calculation stop bit cannot be before start bit'))
+
+        #--OBD2 specific checks
+        if self.OBD2 is True:
+            if self.ext_AID == True:
+                tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'Extended frame cannot be TRUE for OBD2'))
+            if self.DLC != 8:
+                tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'DLC for OBD2 must be 8'))
+            if self.OBD2_PID is None or self.OBD2_PID == '':
+                tmp_err_list.append(create_err_msg('CAN','chCFG-'+self.Name,'OBD2 PID must be defined'))
+
         return tmp_err_list #return error list
     
     def upd_calc_dec(self):
         """function calcualtes the current decimal value based on the
         current rawCAN data frame"""
-        tmpval = 0
-        msb_indx = 0            #temp most-sig byte index for decimal conversion
 
-        if self.OBD2 == False:  #calculate value for non-OBD2 data
-            for frm_indx in self.calc_frames:                       #loop through the defined frames to calcualte
-                tmpval += self.val_rawCAN[frm_indx]*(256**msb_indx) #convert the frame to decimal from LSB to MSB
-                msb_indx += 1   #increment index
-        elif self.OBD2 == True: #calculate value for OBD2 data
-            end_byte = sys_OBD2_msgIndx_datMSB + self.bytes         #calculate the end byte based on the expected data length
-            for byte in self.val_rawCAN[sys_OBD2_msgIndx_datMSB:end_byte]:  #loop through the data values
-                tmpval = (tmpval << 8) | byte                               #and calculate
+        tmpval = int.from_bytes(self.val_rawCAN, byteorder="little")    #convert data frames into pure bytes
+        width = self.stopBit - self.startBit + 1                        #get the data width to retrieve
         
-        tmpval *= self.calc_Scalar  #scale raw decimal result
-        tmpval += self.calc_Offset  #apply final offset
-        self.val_dec.set(round(tmpval,5))    #update doublevar - limit to 5 sigdigs
+        tmpval = (tmpval >> self.startBit) & ((1 << width) - 1)     #calculate the raw value        
+        tmpval *= self.calc_Scalar                                  #scale raw decimal result
+        tmpval += self.calc_Offset                                  #apply final offset
+        self.val_dec.set(round(tmpval,5))    #update calculated result - limit to 5 sigdigs
         
     def CANch_RTR_init(self):
         """function initializes the RTR periodic send task for this data
         channel."""
-        req_ID = None               #temp var for the ID to send a request
-        if self.OBD2 == False: req_ID=self.AID                          #for a non-OBD2 format - ID field is the address
-        elif self.OBD2 == True: req_ID=self.CANcore_ref.OBD2_ECU_IDtx   #for an OBD2 format - use the defined ECUid in CANcore
+        tx_data = None                  #temp var for the data to send with a request
+        RTR_frame = True                #temp var for setting RTR frames
+        if self.OBD2 == False:          #for a non-OBD2 format
+            pass     #no data to send and RTR frame is True
+        elif self.OBD2 == True:         #for OBD2 format
+            RTR_frame = False               #request is set in a normal (non-RTR) frame
+            #and also build the data frame for the request
+            tx_data = [sys_OBD2_TPLEN_single,           #number of PID being requested
+                       sys_OBD2_mode_current,           #mode request to get current data
+                       self.OBD2_PID,                   #at the listed PID
+                       0x00, 0x00, 0x00, 0x00, 0x00]    #pad the remainder with 0s
         
-        msg = self.CANbus_ref.Message(  arbitration_id=req_ID,      #bus address to request data from
-                                        data=None,                  #RTR data field is empty
+        msg = self.CANbus_ref.Message(  arbitration_id=self.AID,    #bus address to request data from
+                                        data=tx_data,               #data to send in request
                                         is_extended_id=self.ext_AID,#CAN frame config
-                                        is_remote_frame=True,       #is a RTR
+                                        is_remote_frame=RTR_frame,  #is a RTR
                                         dlc=self.DLC                #number requested bytes
                                     )
         self.RTR_task = self.CANbus_ref.send_periodic(msg, self.RTR_freq)
@@ -182,13 +175,9 @@ class CAN_core():
         self.RX_filter_en = False   #filter RX inputs to only the defined channels
         self.CANchs = {}            #dictonary of CAN data channel definitions, in format {ch_name:CAN_ch instance}
 
-        #--OBD2 specific information
-        self.OBD2_ECU_IDtx = None   #OBD2 ECU ID - transmit
-        self.OBD2_ECU_IDrx = None   #OBD2 ECU ID - response
-
         #--data handling
         self.RX_filter = []         #iterable of dictionaries for the message RX filter
-        self.RX_allData = {152:[0,1,2,3,4,5,6,7]}   #dictionary of all RX'd can data, in format {AID:[data,frames,rx,....,n=8]}
+        self.RX_allData = {}        #dictionary of all RX'd can data, in format {AID:[data,frames,rx,....,n=8]}
         self.CAN_notifier = None    #instance of the CAN notifier for RX'd messages
 
     def set_cfg(self, **kwargs):
@@ -202,9 +191,7 @@ class CAN_core():
         kwargs = {k.upper(): v for k, v in kwargs.items()}  #convert kwarg names to uppercase. Allows for use with XML and editor attributes
 
         self.AID = str2dec(kwargs.get('BASE_AID', sys_default_AID),16)  #get AID - in decimal format
-        self.RX_filter_en = kwargs.get('RX_FILTER', False)              #set true/false status of the RX filter
-        self.OBD2_ECU_IDtx = kwargs.get('OBD2_ECU_IDTX', None)          #OBD2 ECU ID - transmit
-        self.OBD2_ECU_IDrx = kwargs.get('OBD2_ECU_IDRX', None)          #OBD2 ECU ID - response
+        self.RX_filter_en = str2bool(kwargs.get('RX_FILTER', False))    #set true/false status of the RX filter
     
     def CAN_add_channels(self, CANchs):
         """function adds the passed CAN channels to the class dictionary
@@ -246,16 +233,10 @@ class CAN_core():
         if self.RX_filter_en is None or self.RX_filter_en == '':
             tmp_err_list.append(create_err_msg('CAN','CFG','CAN RX msg filter enable undefined'))
 
-        ch_OBD2 = False         #temp var to track if any CAN channel is an OBD2 config
         for v in self.CANchs.values():                          #cycle through all CAN channels
             ch_err = v.dashCFG_checkErrs()                      #and check for channel errors
             if ch_err:
                 for err in ch_err: tmp_err_list.append(err)     #add any errors
-            if v.OBD2 == True: ch_OBD2 = True                   #if any of the channels is an OBD2 format, set true
-
-        #if one of the CAN channels is an OBD2 type, then the TX/RX field needs to be set
-        if ch_OBD2 == True and (self.OBD2_ECU_IDrx is None or self.OBD2_ECU_IDtx is None):
-            tmp_err_list.append(create_err_msg('CAN','CFG','No OBD2 ECU tx/rx ID set, CAN ch is OBD2 type'))
 
         return tmp_err_list
     
@@ -295,17 +276,15 @@ class CAN_core():
         :param rxfilter_en: enable input filters when defining
         :type rxfilter_en: bool - True to enable when defining
         """
-        ch_OBD2 = False     #temp var to check if any of the channels are an OBD2 type
         for v in self.CANchs.values():                              #cycle through all defined channels
-            if v.OBD2 == False:                     #for non-OBD2 addresses, generate an appropriate filter
-                tmp_mask = None                                             #temp mask var
-                if v.ext_AID == True: tmp_mask = sys_EFF_mask               #if it's an extended AID, use EFF mask
-                else: tmp_mask = sys_SFF_mask                               #otherwise use standard (SFF) mask
-                self.RX_filter.append([{'can_id':v.AID, 'can_mask':tmp_mask, 'extended':v.ext_AID}])       #then append filter to list
-            elif v.OBD2 == True: ch_OBD2 = True     #flag if any channels are OBD2 types
-
-        if ch_OBD2 == True:     #if a CAN channel was OBD2 related, then add the ECU ID to the filter
-            self.RX_filter.append([{'can_id':self.OBD2_ECU_IDrx, 'can_mask':sys_SFF_mask, 'extended':False}])
+            tmp_mask = None                                             #temp mask var
+            tmp_AID = None                                              #temp AID var
+            if v.ext_AID == True: tmp_mask = sys_EFF_mask               #if it's an extended AID, use EFF mask
+            else: tmp_mask = sys_SFF_mask                               #otherwise use standard (SFF) mask
+            if v.OBD2 is True and v.AID is not sys_OBD2_tx_GenBroad:    #if the data channel is an OBD2 address
+                tmp_AID = v.AID + sys_OBD2_rx_EcuOffset                     #then offset the AID for the response by the typical offset
+            else: tmp_AID = v.AID                                       #for non-ODB2 data channels, just use the AID
+            self.RX_filter.append([{'can_id':tmp_AID, 'can_mask':tmp_mask, 'extended':v.ext_AID}])       #then append filter to list
         
         if rxfilter_en == True: self.CAN_RXfilter_on()      #if the filter enable is set, then also start after generating
     
@@ -350,7 +329,6 @@ class CAN_core():
 
     def CAN_rx_data_update(self, AID, data_frames):
         """function updates the all CAN data RX'd dictionary for the CAN sniffer"""
-        #TODO: need to update to handle OBD2 frames
         msg_indx = None
         if AID == self.OBD2_ECU_IDrx:   #if the RX'd message comes from an OBD2 connection
             msg_indx = AID + '|' + data_frames[sys_OBD2_msgIndx_PID]    #then append the PID for a unique entry
