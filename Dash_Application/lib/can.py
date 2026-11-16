@@ -16,8 +16,7 @@ class CANch():
         :type CANbus_master: `can` library
         """
         #--references
-        self.CANcore_ref = CANcore          #reference back to the core configuration
-        self.CANbus_ref = CANcore.CANbus    #reference back to CAN bus instance
+        self.CANcore_ref = CANcore      #reference back to the core configuration
 
         #--channel information
         self.Name = None                #data channel name - will be display name in logfile
@@ -140,13 +139,13 @@ class CANch():
                        self.OBD2_PID,                   #at the listed PID
                        0x00, 0x00, 0x00, 0x00, 0x00]    #pad the remainder with 0s
         
-        msg = self.CANbus_ref.Message(  arbitration_id=self.AID,    #bus address to request data from
-                                        data=tx_data,               #data to send in request
-                                        is_extended_id=self.ext_AID,#CAN frame config
-                                        is_remote_frame=RTR_frame,  #is a RTR
-                                        dlc=self.DLC                #number requested bytes
-                                    )
-        self.RTR_task = self.CANbus_ref.send_periodic(msg, self.RTR_freq)
+        msg = can.Message(  arbitration_id=self.AID,    #bus address to request data from
+                            data=tx_data,               #data to send in request
+                            is_extended_id=self.ext_AID,#CAN frame config
+                            is_remote_frame=RTR_frame,  #is a RTR
+                            dlc=self.DLC                #number requested bytes
+                         )
+        self.RTR_task = self.CANcore_ref.CANbus.send_periodic(msg, self.RTR_freq)
     
     def CANch_RTR_start(self):
         """function starts the channel's RTR task"""
@@ -251,7 +250,8 @@ class CAN_core():
             os.system(sys_string)                                       #initiate can0 interface at 500kbps
             time.sleep(0.05)	                                        #brief pause
             self.CANbus = can.interface.Bus(channel=sys_HW_chnl, 
-                                            interface=sys_CAN_intrfce)  #instance CAN object
+                                            interface=sys_CAN_intrfce,
+                                            receive_own_messages=False) #instance CAN object
             self.CANcom_OK = True                                       #set the CAN status as OK
         except:                                                     #record an error if unsuccessful
             self.master_ref.upd_errors([create_err_msg('CAN','HW','Unable to start CANbus - hardware error')])
@@ -281,10 +281,10 @@ class CAN_core():
             tmp_AID = None                                              #temp AID var
             if v.ext_AID == True: tmp_mask = sys_EFF_mask               #if it's an extended AID, use EFF mask
             else: tmp_mask = sys_SFF_mask                               #otherwise use standard (SFF) mask
-            if v.OBD2 is True and v.AID is not sys_OBD2_tx_GenBroad:    #if the data channel is an OBD2 address
+            if v.OBD2 is True and v.AID != sys_OBD2_tx_GenBroad:        #if the data channel is an OBD2 address
                 tmp_AID = v.AID + sys_OBD2_rx_EcuOffset                     #then offset the AID for the response by the typical offset
             else: tmp_AID = v.AID                                       #for non-ODB2 data channels, just use the AID
-            self.RX_filter.append([{'can_id':tmp_AID, 'can_mask':tmp_mask, 'extended':v.ext_AID}])       #then append filter to list
+            self.RX_filter.append({'can_id':tmp_AID, 'can_mask':tmp_mask, 'extended':v.ext_AID})       #then append filter to list
         
         if rxfilter_en == True: self.CAN_RXfilter_on()      #if the filter enable is set, then also start after generating
     
@@ -330,10 +330,11 @@ class CAN_core():
     def CAN_rx_data_update(self, AID, data_frames):
         """function updates the all CAN data RX'd dictionary for the CAN sniffer"""
         msg_indx = None
-        if AID == self.OBD2_ECU_IDrx:   #if the RX'd message comes from an OBD2 connection
-            msg_indx = AID + '|' + data_frames[sys_OBD2_msgIndx_PID]    #then append the PID for a unique entry
-        else: msg_indx = AID
-        self.RX_allData.update({msg_indx:data_frames})
+        if any((ch.AID == AID and ch.OBD2) for ch in self.CANchs.values()): #if the RX'd message comes from an OBD2 connection
+            msg_indx = f"{AID:03X}|0x{data_frames[sys_OBD2_msgIndx_PID]:02X}"   #then append the PID for a unique entry
+        else: msg_indx = f"{AID:03X}"                                           #otherwise just use plain AID
+        
+        self.RX_allData.update({msg_indx:data_frames})                      #update all data dict with result
     
     def CAN_rx_data_clear(self):
         """function clears the all CAN data RX'd dictionary for the CAN sniffer"""
@@ -347,9 +348,11 @@ class CAN_core():
         rxMSG = CAN_msg.data            #data frames
         #CAN_msg.dlc                    #data length of the RX'd packet
         #True if rx_msg.is_extended_id == 'X' else False    #booloean for EFF data frame
+        #print(f"CAN ID: 0x{rxAID:X}, data: {rxMSG.hex(' ')}") #print to terminal for troubleshooting hardware if needed
 
         self.CAN_rx_data_update(rxAID, rxMSG)       #update the raw can RX'd dict with the message
         for v in self.CANchs.values():              #cycle through all CAN channels
-            if rxAID == v.AID:                      #if the AID corresponds to a data channel
+            expected_rxAID = v.AID + sys_OBD2_rx_EcuOffset if v.OBD2 else v.AID
+            if rxAID == expected_rxAID:             #if the AID corresponds to a data channel
                 v.val_rawCAN = rxMSG                    #set raw CAN frame
                 v.upd_calc_dec()                        #and update decimal value

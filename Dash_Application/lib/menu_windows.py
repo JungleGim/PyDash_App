@@ -194,9 +194,9 @@ class page_menu_CANsniffer(menu_page_template):
         local_allDat = dict(self.master_ref.dash_CAN.RX_allData)    #make local copy
         for aid, dat_frm in local_allDat.items():                   #loop through raw CAN data
             #format should be: 0xAID - [0]...[7]
-            pid_str = f"0x{aid:03X}"                                                #format the AID value
+            aid_str = '0x'+aid                                      #format the address string
             dat_str = '0x[{}]'.format(', '.join(f"{val:02X}" for val in dat_frm))   #format data string
-            string = pid_str + ' - ' + dat_str                      #make the display string
+            string = aid_str + ' - ' + dat_str                      #make the display string
             self.data_listbox.insert(tk.END, string)                #insert display string
         
 class page_menu_errorsMain(menu_page_template):

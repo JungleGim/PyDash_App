@@ -23,13 +23,15 @@ sys_inDEBUG = False    #variable to handle debug parts of code
 if 'TERM_PROGRAM' in os.environ.keys() and os.environ['TERM_PROGRAM'] == 'vscode': sys_inDEBUG = True
 sys_start_time_ms = round(time.time()*1000)            #set start ms for error handling
 
-#---library handling for debug mode vs production mode
-#import RPi.GPIO as GPIO    #needed for the GPI buttons on the CM4
-GPIO = None
+#---handling for debug mode vs production mode
+if sys_inDEBUG == False:    #if not in debug mode, use production import and root directory
+    import RPi.GPIO as GPIO     #pyright: ignore[reportMissingModuleSource] <-needed for VSCode ignote problems on non rPi systems
+    sys_root_dir = '/PyDash_User/' 
+else:                       #otherwise use dev settings
+    GPIO = None
+    sys_root_dir = str(pathlib.Path(__file__).parents[2]) + '/development/dev_root_dir/'  #temp root dir used in development
 
 #----constant file paths and other common directories
-#sys_root_dir = '/mnt/uSD/'                                 #root dir used in final production
-sys_root_dir = str(pathlib.Path(__file__).parents[2]) + '/development/dev_root_dir/'       #temp root dir used in development
 sys_config_dir = sys_root_dir + 'PyDash_Config/'       #directory of configuration
 sys_config_archive = sys_root_dir + 'PyDash_Config.zip' #path for new config archive
 sys_cfg_Images_dir = sys_config_dir + 'images/'       #path for any images used in config
